@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Falcon BMS Flat Map</title>
+    <meta charset="utf-8">
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.css">
+    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.js"></script>
+</head>
+<body>
+    <div id="map" class="map"></div>
+    <div id="control-bar">
+        <div id="mouse-position"></div>
+        <input type="file" id="ini-loader" accept=".ini" />
+    </div>
+
+    <script type="text/javascript">
+        const mapSize = 32768; // size in pixels
+        const tileSize = 256;
+
+        const resolutions = Array.from({ length: 7 }, (_, z) => mapSize / tileSize / Math.pow(2, z));
+
+        const projection = new ol.proj.Projection({
+            code: 'FALCON_PIXELS',
+            units: 'pixels',
+            extent: [0, 0, mapSize, mapSize]
+        });
+
+        const mousePositionControl = new ol.control.MousePosition({
+            coordinateFormat: (coord) => `X: ${coord[0].toFixed(0)}, Y: ${coord[1].toFixed(0)}`,
+            projection: projection,
+            className: 'custom-mouse-position',
+            target: document.getElementById('mouse-position'),
+            undefinedHTML: '&nbsp;'
+        });
+
+        const map = new ol.Map({
+            controls: ol.control.defaults.defaults().extend([mousePositionControl]),
+            target: 'map',
+            layers: [
+            new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    tileUrlFunction: function(tileCoord) {
+                    if (!tileCoord) return '';
+                    const z = tileCoord[0];
+                    const x = tileCoord[1];
+                    const y = Math.pow(2, z) - tileCoord[2] - 1;
+                    return `${z}/${x}/${y}.png`;
+                    },
+                    tileGrid: new ol.tilegrid.TileGrid({
+                    extent: [0, 0, mapSize, mapSize],
+                    origin: [0, mapSize],
+                    tileSize: tileSize,
+                    resolutions: resolutions
+                    }),
+                    projection: projection,
+                    maxZoom: 7
+                })
+                })
+
+            ],
+            view: new ol.View({
+                projection: projection,
+                center: [mapSize / 2, mapSize / 2],
+                resolutions: resolutions,
+                zoom: 2,
+                extent: [0, 0, mapSize, mapSize]
+            })
+        });
+    </script>
+
+    <script src="bms-ini-loader-flat.js"></script>
+    <script>
+        // Match your map variable name
+        //const datum = { lat: 33.84375, lon: 123.0 }; // Adjust if needed
+        //const datum = { lat: 33.77, lon: 121.9800 }; // for example
+
+
+        addINILoaderUI(map);
+
+    </script>
+
+</body>
+</html>
