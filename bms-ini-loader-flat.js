@@ -1,3 +1,5 @@
+let flightPathLayer = null;
+
 function parseBMSINI(content) {
     const lines = content.split('\n');
     const coords = [];
@@ -229,8 +231,17 @@ function drawRouteOnMap(map, data) {
         vectorSource.addFeature(lineFeature);
     }
 
-    const vectorLayer = new ol.layer.Vector({ source: vectorSource });
-    map.addLayer(vectorLayer);
+    // Remove previous layer if it exists
+    if (flightPathLayer) {
+        map.removeLayer(flightPathLayer);
+    }
+
+    // Create and add new vector layer
+    flightPathLayer = new ol.layer.Vector({ source: vectorSource });
+    map.addLayer(flightPathLayer);
+
+
+    
 }
 
 
@@ -247,6 +258,9 @@ function addINILoaderUI(map) {
         reader.onload = (event) => {
             const result = parseBMSINI(event.target.result);
             drawRouteOnMap(map, result);
+            
+            // Reset input so selecting same file again will trigger change event
+            input.value = '';
         };
         reader.readAsText(file);
     });

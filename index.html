@@ -12,10 +12,14 @@
 </head>
 <body>
     <div id="map" class="map"></div>
+	<div id="mouse-position"></div>
     <div id="control-bar">
-        <div id="mouse-position"></div>
+        <label for="ini-loader" class="file-upload-label" title="Load INI">📂 Load mission</label>
         <input type="file" id="ini-loader" accept=".ini" />
+        <button id="clear-button" class="button" title="Clear flightpath">🗑️  Clear mission</button>
     </div>
+    
+    
 
     <script type="text/javascript">
         const mapSize = 32768; // size in pixels
@@ -74,12 +78,16 @@
 
     <script src="bms-ini-loader-flat.js"></script>
     <script>
-        // Match your map variable name
-        //const datum = { lat: 33.84375, lon: 123.0 }; // Adjust if needed
-        //const datum = { lat: 33.77, lon: 121.9800 }; // for example
-
-
         addINILoaderUI(map);
+
+         // Now add the clear button behavior
+        document.getElementById('clear-button').addEventListener('click', () => {
+            if (flightPathLayer) {
+                map.removeLayer(flightPathLayer);
+                flightPathLayer = null;
+            }
+        });
+        
 
     </script>
 
