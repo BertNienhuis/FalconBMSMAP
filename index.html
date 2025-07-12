@@ -113,6 +113,12 @@
             }
         });
 
+        document.addEventListener('touchmove', function(e) {
+            if (isRulerActive) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
 
     </script>
 
