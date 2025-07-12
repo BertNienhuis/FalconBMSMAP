@@ -58,6 +58,13 @@ html, body {
     margin-bottom: 8px;
 }
 
+.button.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #0056b3;
+}
+
+
 /* Hover and active effects */
 .button:hover,
 .file-upload-label:hover {
@@ -69,6 +76,8 @@ html, body {
 .file-upload-label:active {
     background: #ddd;
 }
+
+
 
 .ol-zoom {
     top: auto !important;

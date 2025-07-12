@@ -17,6 +17,8 @@
         <label for="ini-loader" class="file-upload-label" title="Load INI">📂 Load mission</label>
         <input type="file" id="ini-loader" accept=".ini" />
         <button id="clear-button" class="button" title="Clear flightpath">🗑️  Clear mission</button>
+        <button id="ruler-button" class="button" title="Measure distance">📏 Ruler (r)</button>
+
     </div>
     
     
@@ -77,8 +79,13 @@
     </script>
 
     <script src="bms-ini-loader-flat.js"></script>
+    <script src="bms-airport-layer.js"></script>
+    <script src="bms-ruler-tool.js"></script>
+
     <script>
         addINILoaderUI(map);
+
+        // loadAirportIcons('korea_aip.json', map); --disabled for now
 
          // Now add the clear button behavior
         document.getElementById('clear-button').addEventListener('click', () => {
@@ -88,6 +95,24 @@
             }
         });
         
+
+
+        const rulerBtn = document.getElementById('ruler-button');
+        rulerBtn.addEventListener('click', () => {
+            if (isRulerActive) {
+                disableRuler(map, rulerBtn);
+            } else {
+                enableRuler(map, rulerBtn);
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'r') {
+                const rulerButton = document.getElementById('ruler-button');
+                enableRuler(map, rulerButton);
+            }
+        });
+
 
     </script>
 

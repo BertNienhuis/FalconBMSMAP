@@ -133,8 +133,8 @@ function drawRouteOnMap(map, data) {
         marker.setStyle(new ol.style.Style({
             image: new ol.style.Circle({
                 radius: 5,
-                fill: new ol.style.Fill({ color: 'white' }),
-                stroke: new ol.style.Stroke({ color: 'black', width: 1 })
+                fill: new ol.style.Fill({ color: '#ffffff00' }),
+                stroke: new ol.style.Stroke({ color: 'white', width: 2 })
             }),
             text: new ol.style.Text({
                 text: `${i}`,
