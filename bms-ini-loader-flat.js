@@ -130,20 +130,34 @@ function drawRouteOnMap(map, data) {
             geometry: new ol.geom.Point(point.latlon)
         });
 
-        marker.setStyle(new ol.style.Style({
-            image: new ol.style.Circle({
-                radius: 5,
-                fill: new ol.style.Fill({ color: '#ffffff00' }),
-                stroke: new ol.style.Stroke({ color: 'white', width: 2 })
-            }),
-            text: new ol.style.Text({
-                text: `${i}`,
-                offsetY: -15,
-                font: 'bold 16px sans-serif',
-                fill: new ol.style.Fill({ color: '#fff' }),
-                stroke: new ol.style.Stroke({ color: '#000', width: 2 })
-            })
-        }));
+    const isActionType14 = point.action === 14;
+
+    const shapeStyle = isActionType14
+    ? new ol.style.RegularShape({
+        points: 3,
+        radius: 8,
+        rotation: 0,
+        fill: new ol.style.Fill({ color: 'rgba(255, 255, 255, 0)' }), // transparent
+        stroke: new ol.style.Stroke({ color: 'white', width: 2 })
+    })
+    : new ol.style.Circle({
+        radius: 5,
+        fill: new ol.style.Fill({ color: '#ffffff00' }),
+        stroke: new ol.style.Stroke({ color: 'white', width: 2 })
+    });
+
+    marker.setStyle(new ol.style.Style({
+        image: shapeStyle,
+        text: new ol.style.Text({
+            text: `${i }`,
+            offsetY: -15,
+            font: 'bold 16px sans-serif',
+            fill: new ol.style.Fill({ color: '#fff' }),
+            stroke: new ol.style.Stroke({ color: '#000', width: 2 })
+        })
+    }));
+
+       
 
         vectorSource.addFeature(marker);
 
