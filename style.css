@@ -13,7 +13,7 @@ html, body {
     position: absolute;
     top: 10px;
     left: 10px;
-    background: white;
+    background: #ffffffa3;
     display: flex;
     flex-direction: column;
     align-items: center;
