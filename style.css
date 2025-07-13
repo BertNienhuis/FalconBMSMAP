@@ -61,6 +61,14 @@ html, body {
     margin-bottom: 8px;  
 }
 
+.button svg {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    vertical-align: middle;
+    stroke-width: 2;
+}
+
 .file-upload-label {
     display: flex;
     align-items: center;
@@ -75,10 +83,7 @@ html, body {
     border-color: #0056b3;
 }
 
-#control-bar .button.active {
-    background-color: #444;
-    color: yellow;
-}
+
 
 
 /* Hover and active effects */

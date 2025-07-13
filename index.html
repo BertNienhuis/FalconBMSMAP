@@ -9,32 +9,53 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.css">
     <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
 </head>
 <body>
     <div id="map" class="map"></div>
 	<div id="mouse-position"></div>
     <div id="control-bar">
         <div class="tool-group">
-            <label for="ini-loader" class="button file-upload-label" title="Load INI">📂 Open</label>
+            <label for="ini-loader" class="button file-upload-label" title="Load mission">
+                <i data-lucide="folder-open"></i> Open
+            </label>
             <input type="file" id="ini-loader" accept=".ini" />
-            <button id="clear-button" class="button" title="Clear flightpath">🗑️ Mission</button>
-            <button id="ruler-button" class="button" title="Measure distance">📏 Ruler (l)</button>
+            <button id="clear-button" class="button" title="Clear mission">
+                <i data-lucide="trash-2"></i> Clear mission
+            </button>
+            <button id="ruler-button" class="button" title="Measure distance (L)">
+                <i data-lucide="ruler"></i> Ruler (L)
+            </button>
         </div>
     
         <div class="tool-group">
-            <button id="whiteboard-pencil" class="button" title="Free draw (pencil)">✏️ Pencil (q)</button>
-            <button id="whiteboard-polygon" class="button" title="Draw polygon">🔺 Polygon (w)</button>
-            <button id="whiteboard-circle" class="button" title="Draw circle">⚪ Circle (e)</button>
-            <button id="whiteboard-rect" class="button" title="Draw rectangle">▭ Rectangle (r)</button>
+            <button id="whiteboard-pencil" class="button" title="Free draw (Q)">
+                <i data-lucide="pencil"></i> Pencil (Q)
+            </button>
+            <button id="whiteboard-polygon" class="button" title="Draw polygon (W)">
+                <i data-lucide="triangle"></i> Polygon (W)
+            </button>
+            <button id="whiteboard-circle" class="button" title="Draw circle (E)">
+                <i data-lucide="circle"></i> Circle (E)
+            </button>
+            <button id="whiteboard-rect" class="button" title="Draw rectangle (R)">
+                <i data-lucide="square"></i> Rectangle (R)
+            </button>
         </div>
     
         <div class="tool-group">
-            <button id="whiteboard-undo" class="button" title="Undo (z)">↶ Undo (z)</button>
-            <button id="whiteboard-redo" class="button" title="Redo (y)">↷ Redo (y)</button>
-            <button id="whiteboard-eraser" class="button" title="Clear whiteboard">🧽 Clean</button>
+            <button id="whiteboard-undo" class="button" title="Undo (Z)">
+                <i data-lucide="undo-2"></i> Undo (Z)
+            </button>
+            <button id="whiteboard-redo" class="button" title="Redo (Y)">
+                <i data-lucide="redo-2"></i> Redo (Y)
+            </button>
+            <button id="whiteboard-eraser" class="button" title="Clear whiteboard">
+                <i data-lucide="eraser"></i> Clean
+            </button>
         </div>
     </div>
-    
     
     
 
@@ -185,7 +206,9 @@
             }
         });
 
-
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+        });
 
 
     </script>
