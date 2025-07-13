@@ -78,16 +78,23 @@ function enableWhiteboardDrawing(map) {
         case 'Rectangle':
             drawType = 'Circle';
             geometryFunction = ol.interaction.Draw.createBox();
+            freehand = false;
+            break;
+        case 'Circle':
+            drawType = 'Circle';
+            freehand = false; // set to true on touch devices below
             break;
         case 'Polygon':
             drawType = 'Polygon';
             break;
-        case 'Circle':
-            drawType = 'Circle';
-            break;
     }
 
-    // Disable map drag to allow direct drawing
+    // ✅ Fix: enable freehand for Circle on touch devices (iPad compatibility trick)
+    if ((currentDrawType === 'Circle' || currentDrawType === 'Rectangle') && 'ontouchstart' in window) {
+        freehand = true;
+    }
+
+    // Disable map panning while drawing
     dragPanInteraction?.setActive(false);
 
     whiteboardDrawInteraction = new ol.interaction.Draw({
@@ -95,66 +102,66 @@ function enableWhiteboardDrawing(map) {
         type: drawType,
         geometryFunction,
         freehand,
-
-       
-
-        style: function (feature, resolution) {
-            const geometry = feature.getGeometry();
-            const type = geometry.getType();
-        
-            // Style for lines, polygons, rectangles, circles
-            const shapeStyle = new ol.style.Style({
-                stroke: new ol.style.Stroke({
-                    color: currentColor,
-                    width: 2,
-                    lineDash: [4, 4]
-                }),
-                fill: new ol.style.Fill({
-                    color: 'rgba(255, 0, 0, 0.1)'
-                })
-            });
-        
-            // Blue dot at cursor when drawing (for Point or active sketch vertex)
-            const pointStyle = new ol.style.Style({
-                image: new ol.style.Circle({
-                    radius: 5,
-                    fill: new ol.style.Fill({ color: 'rgba(0, 153, 255, 0.9)' }),
-                    stroke: new ol.style.Stroke({ color: 'white', width: 1 })
-                }),
-                geometry: function (feature) {
-                    if (type === 'Point') return geometry;
-                    if (type === 'LineString') {
-                        const coords = geometry.getCoordinates();
-                        return new ol.geom.Point(coords[coords.length - 1]);
-                    }
-                    if (type === 'Polygon') {
-                        const coords = geometry.getCoordinates()[0];
-                        return new ol.geom.Point(coords[coords.length - 1]);
-                    }
-                    return null;
-                }
-            });
-        
-            return [shapeStyle, pointStyle];
-        }
+        style: getDrawingStyle()
     });
 
     whiteboardDrawInteraction.on('drawend', (event) => {
         const feature = event.feature;
         undoStack.push(feature);
-        redoStack.length = 0; // Clear redo stack after new draw
-    
+        redoStack.length = 0;
+
         disableWhiteboardDrawing(map);
         whiteboardEnabled = false;
-    
+
         document.querySelectorAll('#control-bar .button').forEach(btn => {
             btn.classList.remove('active');
         });
     });
-    
 
     map.addInteraction(whiteboardDrawInteraction);
 }
+
+function getDrawingStyle() {
+    return function (feature) {
+        const geometry = feature.getGeometry();
+        const type = geometry.getType();
+
+        const shapeStyle = new ol.style.Style({
+            stroke: new ol.style.Stroke({
+                color: currentColor,
+                width: 2,
+                lineDash: [4, 4]
+            }),
+            fill: new ol.style.Fill({
+                color: 'rgba(255, 0, 0, 0.1)'
+            })
+        });
+
+        const pointStyle = new ol.style.Style({
+            image: new ol.style.Circle({
+                radius: 5,
+                fill: new ol.style.Fill({ color: 'rgba(0, 153, 255, 0.9)' }),
+                stroke: new ol.style.Stroke({ color: 'white', width: 1 })
+            }),
+            geometry: function () {
+                if (type === 'Point') return geometry;
+                if (type === 'LineString') {
+                    const coords = geometry.getCoordinates();
+                    return new ol.geom.Point(coords[coords.length - 1]);
+                }
+                if (type === 'Polygon') {
+                    const coords = geometry.getCoordinates()[0];
+                    return new ol.geom.Point(coords[coords.length - 1]);
+                }
+                return null;
+            }
+        });
+
+        return [shapeStyle, pointStyle];
+    };
+}
+
+
 
 function disableWhiteboardDrawing(map) {
     if (whiteboardDrawInteraction) {
