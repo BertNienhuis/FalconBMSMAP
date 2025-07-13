@@ -1,5 +1,7 @@
 let flightPathLayer = null;
 
+const SCALE = 0.00976;
+
 function parseBMSINI(content) {
     const lines = content.split('\n');
     const coords = [];
@@ -8,7 +10,7 @@ function parseBMSINI(content) {
     const linePoints = [];
 
     let landed = false;
-    const SCALE = 0.00976;
+    
 
     for (const line of lines) {
         const trimmed = line.trim();

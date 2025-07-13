@@ -18,11 +18,15 @@ html, body {
     flex-direction: column;
     align-items: center;
     padding: 10px 10px 2px 10px;
-
+    gap: 16px;
     box-shadow: 2px 0 8px rgba(0,0,0,0.2);
     border-radius: 4px;
     z-index: 9999;
+    font-family: 'Segoe UI', sans-serif;
 }
+
+
+
 
 #mouse-position {
     position: absolute ;
@@ -41,8 +45,7 @@ html, body {
 }
 
 /* Shared button-like styles */
-.button,
-.file-upload-label {
+.button {
     width: 130px;
     height: 25px;
     border: 1px solid #ccc;
@@ -55,13 +58,26 @@ html, body {
     font-size: 14px;
     transition: background 0.2s, border-color 0.2s;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    margin-bottom: 8px;
+    margin-bottom: 8px;  
 }
+
+.file-upload-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
 
 .button.active {
     background-color: #007bff;
     color: white;
     border-color: #0056b3;
+}
+
+#control-bar .button.active {
+    background-color: #444;
+    color: yellow;
 }
 
 
@@ -75,6 +91,15 @@ html, body {
 .button:active,
 .file-upload-label:active {
     background: #ddd;
+}
+
+#control-bar select.button {
+    padding: 5px;
+    font-size: 16px;
+    border: 1px solid #888;
+    border-radius: 4px;
+    background: #222;
+    color: #fff;
 }
 
 

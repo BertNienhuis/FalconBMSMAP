@@ -5,7 +5,7 @@ let lineFeature = null;
 let labelFeature = null;
 let moveListener = null;
 let upListener = null;
-let dragPanInteraction = null;
+
 
 function enableRuler(map, button) {
     if (isRulerActive) return;

@@ -14,12 +14,27 @@
     <div id="map" class="map"></div>
 	<div id="mouse-position"></div>
     <div id="control-bar">
-        <label for="ini-loader" class="file-upload-label" title="Load INI">📂 Load mission</label>
-        <input type="file" id="ini-loader" accept=".ini" />
-        <button id="clear-button" class="button" title="Clear flightpath">🗑️  Clear mission</button>
-        <button id="ruler-button" class="button" title="Measure distance">📏 Ruler (r)</button>
-
+        <div class="tool-group">
+            <label for="ini-loader" class="button file-upload-label" title="Load INI">📂 Open</label>
+            <input type="file" id="ini-loader" accept=".ini" />
+            <button id="clear-button" class="button" title="Clear flightpath">🗑️ Mission</button>
+            <button id="ruler-button" class="button" title="Measure distance">📏 Ruler (l)</button>
+        </div>
+    
+        <div class="tool-group">
+            <button id="whiteboard-pencil" class="button" title="Free draw (pencil)">✏️ Pencil (q)</button>
+            <button id="whiteboard-polygon" class="button" title="Draw polygon">🔺 Polygon (w)</button>
+            <button id="whiteboard-circle" class="button" title="Draw circle">⚪ Circle (e)</button>
+            <button id="whiteboard-rect" class="button" title="Draw rectangle">▭ Rectangle (r)</button>
+        </div>
+    
+        <div class="tool-group">
+            <button id="whiteboard-undo" class="button" title="Undo (z)">↶ Undo (z)</button>
+            <button id="whiteboard-redo" class="button" title="Redo (y)">↷ Redo (y)</button>
+            <button id="whiteboard-eraser" class="button" title="Clear whiteboard">🧽 Clean</button>
+        </div>
     </div>
+    
     
     
 
@@ -81,11 +96,16 @@
     <script src="bms-ini-loader-flat.js"></script>
     <script src="bms-airport-layer.js"></script>
     <script src="bms-ruler-tool.js"></script>
+    <script src="bms-whiteboard.js"></script>
+
 
     <script>
         addINILoaderUI(map);
 
-        // loadAirportIcons('korea_aip.json', map); --disabled for now
+         //loadAirportIcons('korea_aip.json', map); 
+
+
+
 
          // Now add the clear button behavior
         document.getElementById('clear-button').addEventListener('click', () => {
@@ -107,17 +127,65 @@
         });
 
         document.addEventListener('keydown', (e) => {
-            if (e.key.toLowerCase() === 'r') {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        switch (e.key.toLowerCase()) {
+            case 'q':
+                document.getElementById('whiteboard-pencil')?.click();
+                break;
+            case 'w':
+                document.getElementById('whiteboard-polygon')?.click();
+                break;
+            case 'r':
+                document.getElementById('whiteboard-rect')?.click();
+                break;
+            case 'e':
+                document.getElementById('whiteboard-circle')?.click();
+                break;
+            case 't':
+                document.getElementById('whiteboard-eraser')?.click();
+                break;
+            case 'l':
                 const rulerButton = document.getElementById('ruler-button');
                 enableRuler(map, rulerButton);
-            }
-        });
+                break;
+            case 'z':
+                document.getElementById('whiteboard-undo')?.click();
+                break;
+            case 'y':
+                document.getElementById('whiteboard-redo')?.click();
+                break;
 
+            }
+    });
+
+               
         document.addEventListener('touchmove', function(e) {
             if (isRulerActive) {
                 e.preventDefault();
             }
         }, { passive: false });
+
+
+        //Whiteboard
+        initWhiteboard(map);
+        document.getElementById('whiteboard-undo')?.addEventListener('click', () => {
+        const feature = undoStack.pop();
+            if (feature) {
+                whiteboardSource.removeFeature(feature);
+                redoStack.push(feature);
+            }
+        });
+
+        document.getElementById('whiteboard-redo')?.addEventListener('click', () => {
+            const feature = redoStack.pop();
+            if (feature) {
+                whiteboardSource.addFeature(feature);
+                undoStack.push(feature);
+            }
+        });
+
+
 
 
     </script>
