@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Falcon BMS Flat Map</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimal-ui">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="dark-content">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.css">
+    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+</head>
+<body>
+    <div id="map" class="map"></div>
+	<div id="mouse-position"></div>
+    <div id="control-bar">
+        <div class="tool-group">
+            <label for="theater-select" class="button" style="padding: 5px;">
+                <i data-lucide="map"></i> 
+                <select id="theater-select" style="margin-left: 6px;">
+                <option value="Korea">Korea</option>
+                <option value="Israel">Israel</option>
+                </select>
+            </label>
+        </div>
+        <div class="tool-group">
+            <label for="ini-loader" class="button file-upload-label" title="Load mission">
+                <i data-lucide="folder-open"></i> Open mission
+            </label>
+            <input type="file" id="ini-loader" accept=".ini" />
+            <button id="clear-button" class="button" title="Clear mission">
+                <i data-lucide="trash-2"></i> Clear mission
+            </button>
+            <button id="ruler-button" class="button" title="Measure distance (L)">
+                <i data-lucide="ruler"></i> Ruler (L)
+            </button>
+        </div>
+    
+        <div class="tool-group">
+            <button id="whiteboard-pencil" class="button" title="Free draw (Q)">
+                <i data-lucide="pencil"></i> Pencil (Q)
+            </button>
+            <button id="whiteboard-polygon" class="button" title="Draw polygon (W)">
+                <i data-lucide="triangle"></i> Polygon (W)
+            </button>
+            <button id="whiteboard-circle" class="button" title="Draw circle (E)">
+                <i data-lucide="circle"></i> Circle (E)
+            </button>
+            <button id="whiteboard-rect" class="button" title="Draw rectangle (R)">
+                <i data-lucide="square"></i> Rectangle (R)
+            </button>
+        </div>
+    
+        <div class="tool-group">
+            <button id="whiteboard-undo" class="button" title="Undo (Z)">
+                <i data-lucide="undo-2"></i> Undo (Z)
+            </button>
+            <button id="whiteboard-redo" class="button" title="Redo (Y)">
+                <i data-lucide="redo-2"></i> Redo (Y)
+            </button>
+            <button id="whiteboard-eraser" class="button" title="Clear whiteboard">
+                <i data-lucide="eraser"></i> Clean
+            </button>
+        </div>
+    </div>
+    
+    
+
+    <script type="text/javascript">
+        const mapSize = 32768; // size in pixels
+        const tileSize = 256;
+
+        const resolutions = Array.from({ length: 7 }, (_, z) => mapSize / tileSize / Math.pow(2, z));
+
+        const projection = new ol.proj.Projection({
+            code: 'FALCON_PIXELS',
+            units: 'pixels',
+            extent: [0, 0, mapSize, mapSize]
+        });
+
+        const mousePositionControl = new ol.control.MousePosition({
+            coordinateFormat: (coord) => `X: ${coord[0].toFixed(0)}, Y: ${coord[1].toFixed(0)}`,
+            projection: projection,
+            className: 'custom-mouse-position',
+            target: document.getElementById('mouse-position'),
+            undefinedHTML: '&nbsp;'
+        });
+
+        const map = new ol.Map({
+            controls: ol.control.defaults.defaults().extend([mousePositionControl]),
+            target: 'map',
+            layers: [
+            new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    tileUrlFunction: function(tileCoord) {
+                    if (!tileCoord) return '';
+                    const z = tileCoord[0];
+                    const x = tileCoord[1];
+                    const y = Math.pow(2, z) - tileCoord[2] - 1;
+                    return `Korea/${z}/${x}/${y}.png`;
+                    },
+                    tileGrid: new ol.tilegrid.TileGrid({
+                    extent: [0, 0, mapSize, mapSize],
+                    origin: [0, mapSize],
+                    tileSize: tileSize,
+                    resolutions: resolutions
+                    }),
+                    projection: projection,
+                    maxZoom: 7
+                })
+                })
+
+            ],
+            view: new ol.View({
+                projection: projection,
+                center: [mapSize / 2, mapSize / 2],
+                resolutions: resolutions,
+                zoom: 2,
+                extent: [0, 0, mapSize, mapSize]
+            })
+        });
+    </script>
+
+    <script src="bms-ini-loader-flat.js"></script>
+    <script src="bms-airport-layer.js"></script>
+    <script src="bms-ruler-tool.js"></script>
+    <script src="bms-whiteboard.js"></script>
+
+
+    <script>
+        addINILoaderUI(map);
+
+         //loadAirportIcons('korea_aip.json', map); 
+
+
+
+
+         // Now add the clear button behavior
+        document.getElementById('clear-button').addEventListener('click', () => {
+            if (flightPathLayer) {
+                map.removeLayer(flightPathLayer);
+                flightPathLayer = null;
+            }
+        });
+        
+
+
+        const rulerBtn = document.getElementById('ruler-button');
+        rulerBtn.addEventListener('click', () => {
+            if (isRulerActive) {
+                disableRuler(map, rulerBtn);
+            } else {
+                enableRuler(map, rulerBtn);
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        switch (e.key.toLowerCase()) {
+            case 'q':
+                document.getElementById('whiteboard-pencil')?.click();
+                break;
+            case 'w':
+                document.getElementById('whiteboard-polygon')?.click();
+                break;
+            case 'r':
+                document.getElementById('whiteboard-rect')?.click();
+                break;
+            case 'e':
+                document.getElementById('whiteboard-circle')?.click();
+                break;
+            case 't':
+                document.getElementById('whiteboard-eraser')?.click();
+                break;
+            case 'l':
+                const rulerButton = document.getElementById('ruler-button');
+                enableRuler(map, rulerButton);
+                break;
+            case 'z':
+                document.getElementById('whiteboard-undo')?.click();
+                break;
+            case 'y':
+                document.getElementById('whiteboard-redo')?.click();
+                break;
+
+            }
+    });
+
+               
+        document.addEventListener('touchmove', function(e) {
+            if (isRulerActive) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+
+        //Whiteboard
+        initWhiteboard(map);
+        document.getElementById('whiteboard-undo')?.addEventListener('click', () => {
+        const feature = undoStack.pop();
+            if (feature) {
+                whiteboardSource.removeFeature(feature);
+                redoStack.push(feature);
+            }
+        });
+
+        document.getElementById('whiteboard-redo')?.addEventListener('click', () => {
+            const feature = redoStack.pop();
+            if (feature) {
+                whiteboardSource.addFeature(feature);
+                undoStack.push(feature);
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+        });
+
+
+    </script>
+
+</body>
+</html>

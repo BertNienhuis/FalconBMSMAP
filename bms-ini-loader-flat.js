@@ -1,6 +1,10 @@
 let flightPathLayer = null;
 
-const SCALE = 0.00976;
+// Coordinate scale per theater
+const THEATER_SCALE = {
+    Korea: 0.00976,
+    Israel: 0.002438, 
+};
 
 function parseBMSINI(content) {
     const lines = content.split('\n');
@@ -10,7 +14,8 @@ function parseBMSINI(content) {
     const linePoints = [];
 
     let landed = false;
-    
+
+    const scale = THEATER_SCALE[currentTheater] || THEATER_SCALE.Korea;
 
     for (const line of lines) {
         const trimmed = line.trim();
@@ -24,8 +29,8 @@ function parseBMSINI(content) {
 
             if (!north || !east || isNaN(north) || isNaN(east) || action === -1) continue;
 
-            const x = east * SCALE;
-            const y = north * SCALE;
+            const x = east * scale;
+            const y = north * scale;
 
             coords.push({ latlon: [x, y], action });
 
@@ -48,51 +53,50 @@ function parseBMSINI(content) {
 
             if ([north, east, alt, radius].every(v => v === 0) || isNaN(north) || isNaN(east) || isNaN(radius)) continue;
 
-            const x = east * SCALE;
-            const y = north * SCALE;
+            const x = east * scale;
+            const y = north * scale;
 
             threats.push({
                 center: [x, y],
-                radius: radius * SCALE,
+                radius: radius * scale,
                 label
             });
         }
 
         // --- CUSTOM LINE PATHS ---
-		else if (trimmed.startsWith('lineSTPT_')) {
-			const parts = trimmed.split('=')[1].split(',');
-			const north = parseFloat(parts[0]);
-			const east = parseFloat(parts[1]);
+        else if (trimmed.startsWith('lineSTPT_')) {
+            const parts = trimmed.split('=')[1].split(',');
+            const north = parseFloat(parts[0]);
+            const east = parseFloat(parts[1]);
 
-			const isZero = north === 0 && east === 0;
+            const isZero = north === 0 && east === 0;
 
-			if (isZero || isNaN(north) || isNaN(east)) {
-				// End current segment if it has enough points
-				if (linePoints.length >= 2) {
-					lineSegments.push([...linePoints]);
-				}
-				linePoints.length = 0; // Reset current group
-				continue;
-			}
+            if (isZero || isNaN(north) || isNaN(east)) {
+                if (linePoints.length >= 2) {
+                    lineSegments.push([...linePoints]);
+                }
+                linePoints.length = 0;
+                continue;
+            }
 
-			const x = east * SCALE;
-			const y = north * SCALE;
-			linePoints.push([x, y]);
+            const x = east * scale;
+            const y = north * scale;
+            linePoints.push([x, y]);
 
-			if (linePoints.length === 6) {
-				lineSegments.push([...linePoints]);
-				linePoints.length = 0;
-			}
-		}
-
+            if (linePoints.length === 6) {
+                lineSegments.push([...linePoints]);
+                linePoints.length = 0;
+            }
+        }
     }
 
-    // Push remaining points if any
     if (linePoints.length >= 2) {
         lineSegments.push([...linePoints]);
     }
 
-    return { coords, threats, lineSegments };
+    console.log(coords);
+
+    return { coords, threats, lineSegments, scale };
 }
 
 
@@ -101,7 +105,7 @@ function drawRouteOnMap(map, data) {
     const { coords, threats, lineSegments } = data;
     const vectorSource = new ol.source.Vector();
 
-    const feetPerPixel = 1 / 0.00976;
+    const feetPerPixel = 1 / data.scale;
     const feetPerNM = 6076.12;
     const stopIndex = coords.stopIndex || coords.length;
 

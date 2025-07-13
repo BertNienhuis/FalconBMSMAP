@@ -5,17 +5,17 @@ let lineFeature = null;
 let labelFeature = null;
 let moveListener = null;
 let upListener = null;
-
+let rulerDragPan = null;
 
 function enableRuler(map, button) {
     if (isRulerActive) return;
     isRulerActive = true;
-    button.classList.add('active');
+    button?.classList.add('active');
 
     // Disable map drag
-    dragPanInteraction = map.getInteractions().getArray().find(i => i instanceof ol.interaction.DragPan);
-    if (dragPanInteraction) {
-        map.removeInteraction(dragPanInteraction);
+    rulerDragPan = map.getInteractions().getArray().find(i => i instanceof ol.interaction.DragPan);
+    if (rulerDragPan) {
+        map.removeInteraction(rulerDragPan);
     }
 
     const source = new ol.source.Vector();
@@ -28,24 +28,19 @@ function enableRuler(map, button) {
     map.once('pointerdown', e => {
         startCoord = e.coordinate;
 
-        // Create line + label features
-
         lineFeature = new ol.Feature({
             geometry: new ol.geom.LineString([startCoord, startCoord])
         });
-        
         lineFeature.setStyle(new ol.style.Style({
             stroke: new ol.style.Stroke({
                 color: 'black',
-                width: 2 // Thicker line
+                width: 2
             })
         }));
-        
 
         labelFeature = new ol.Feature(new ol.geom.Point(startCoord));
         source.addFeatures([lineFeature, labelFeature]);
 
-        // Listen to pointermove
         moveListener = map.on('pointermove', moveEvent => {
             const endCoord = moveEvent.coordinate;
             lineFeature.getGeometry().setCoordinates([startCoord, endCoord]);
@@ -53,7 +48,9 @@ function enableRuler(map, button) {
             const dx = endCoord[0] - startCoord[0];
             const dy = endCoord[1] - startCoord[1];
             const dist = Math.sqrt(dx * dx + dy * dy);
-            const feetPerPixel = 1 / 0.00976;
+
+            const scale = window.getCurrentScale?.() || 0.00976;
+            const feetPerPixel = 1 / scale;
             const feetPerNM = 6076.12;
             const distNM = (dist * feetPerPixel) / feetPerNM;
 
@@ -73,7 +70,6 @@ function enableRuler(map, button) {
             }));
         });
 
-        // Finalize on pointerup
         upListener = map.once('pointerup', () => {
             disableRuler(map, button);
         });
@@ -93,9 +89,9 @@ function disableRuler(map, button) {
         map.removeLayer(rulerLayer);
         rulerLayer = null;
     }
-    if (dragPanInteraction) {
-        map.addInteraction(dragPanInteraction);
-        dragPanInteraction = null;
+    if (rulerDragPan) {
+        map.addInteraction(rulerDragPan);
+        rulerDragPan = null;
     }
 
     isRulerActive = false;

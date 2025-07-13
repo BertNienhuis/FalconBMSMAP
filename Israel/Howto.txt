@@ -1,0 +1,3 @@
+Open OSGeo4W Shell
+Navigate to directory containing 8k, 16k map
+gdal2tiles.py -p raster -z 0-6  ITO_UI_Map_8K.png /

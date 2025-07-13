@@ -4,33 +4,44 @@ let whiteboardDrawInteraction = null;
 let whiteboardEnabled = false;
 let currentDrawType = 'Freehand';
 const currentColor = 'red';
-let dragPanInteraction = null;
+let whiteboardDragPan = null;
 
 const undoStack = [];
 const redoStack = [];
 
 function initWhiteboard(map) {
-    // Save dragPan interaction
-    dragPanInteraction = map.getInteractions().getArray().find(i => i instanceof ol.interaction.DragPan);
+    // 🧹 Clear old state (important when switching maps)
+    if (whiteboardDrawInteraction) {
+        map.removeInteraction(whiteboardDrawInteraction);
+        whiteboardDrawInteraction = null;
+    }
+    if (whiteboardLayer) {
+        map.removeLayer(whiteboardLayer);
+        whiteboardLayer = null;
+    }
+    whiteboardSource = null;
+    whiteboardEnabled = false;
 
+    // 🧲 Save dragPan interaction
+    whiteboardDragPan = map.getInteractions().getArray().find(i => i instanceof ol.interaction.DragPan);
+
+    // Create new source + layer
     whiteboardSource = new ol.source.Vector();
     whiteboardLayer = new ol.layer.Vector({
         source: whiteboardSource,
-        style: feature => {
-            return new ol.style.Style({
-                stroke: new ol.style.Stroke({
-                    color: currentColor,
-                    width: 2
-                }),
-                fill: new ol.style.Fill({
-                    color: 'rgba(0, 0, 0, 0)' // transparent fill
-                })
-            });
-        }
+        style: feature => new ol.style.Style({
+            stroke: new ol.style.Stroke({
+                color: currentColor,
+                width: 2
+            }),
+            fill: new ol.style.Fill({
+                color: 'rgba(0, 0, 0, 0)'
+            })
+        })
     });
     map.addLayer(whiteboardLayer);
 
-    // Button events
+    // Button bindings
     const tools = {
         'whiteboard-pencil': 'Freehand',
         'whiteboard-rect': 'Rectangle',
@@ -78,24 +89,20 @@ function enableWhiteboardDrawing(map) {
         case 'Rectangle':
             drawType = 'Circle';
             geometryFunction = ol.interaction.Draw.createBox();
-            freehand = false;
             break;
         case 'Circle':
             drawType = 'Circle';
-            freehand = false; // set to true on touch devices below
             break;
         case 'Polygon':
             drawType = 'Polygon';
             break;
     }
 
-    // ✅ Fix: enable freehand for Circle on touch devices (iPad compatibility trick)
     if ((currentDrawType === 'Circle' || currentDrawType === 'Rectangle') && 'ontouchstart' in window) {
         freehand = true;
     }
 
-    // Disable map panning while drawing
-    dragPanInteraction?.setActive(false);
+    whiteboardDragPan?.setActive(false);
 
     whiteboardDrawInteraction = new ol.interaction.Draw({
         source: whiteboardSource,
@@ -121,8 +128,16 @@ function enableWhiteboardDrawing(map) {
     map.addInteraction(whiteboardDrawInteraction);
 }
 
+function disableWhiteboardDrawing(map) {
+    if (whiteboardDrawInteraction) {
+        map.removeInteraction(whiteboardDrawInteraction);
+        whiteboardDrawInteraction = null;
+    }
+    whiteboardDragPan?.setActive(true);
+}
+
 function getDrawingStyle() {
-    return function (feature) {
+    return (feature) => {
         const geometry = feature.getGeometry();
         const type = geometry.getType();
 
@@ -145,32 +160,15 @@ function getDrawingStyle() {
             }),
             geometry: function () {
                 if (type === 'Point') return geometry;
-                if (type === 'LineString') {
-                    const coords = geometry.getCoordinates();
-                    return new ol.geom.Point(coords[coords.length - 1]);
-                }
-                if (type === 'Polygon') {
-                    const coords = geometry.getCoordinates()[0];
-                    return new ol.geom.Point(coords[coords.length - 1]);
-                }
+                const coords = geometry.getCoordinates();
+                if (type === 'LineString') return new ol.geom.Point(coords[coords.length - 1]);
+                if (type === 'Polygon') return new ol.geom.Point(coords[0][coords[0].length - 1]);
                 return null;
             }
         });
 
         return [shapeStyle, pointStyle];
     };
-}
-
-
-
-function disableWhiteboardDrawing(map) {
-    if (whiteboardDrawInteraction) {
-        map.removeInteraction(whiteboardDrawInteraction);
-        whiteboardDrawInteraction = null;
-    }
-
-    // Re-enable panning
-    dragPanInteraction?.setActive(true);
 }
 
 function setActiveButton(activeBtn) {
