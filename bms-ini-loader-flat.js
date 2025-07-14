@@ -1,10 +1,6 @@
 let flightPathLayer = null;
 
-// Coordinate scale per theater
-const THEATER_SCALE = {
-    Korea: 0.00976,
-    Israel: 0.002438, 
-};
+
 
 function parseBMSINI(content) {
     const lines = content.split('\n');
@@ -15,7 +11,7 @@ function parseBMSINI(content) {
 
     let landed = false;
 
-    const scale = THEATER_SCALE[currentTheater] || THEATER_SCALE.Korea;
+    const scale = window.getCurrentScale?.() || 1;
 
     for (const line of lines) {
         const trimmed = line.trim();
