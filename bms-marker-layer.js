@@ -72,9 +72,9 @@ function populateMarkerTypes(domain) {
     typeSelect.innerHTML = '';
 
     const allTypes = {
-        land: ['infantry', 'mechanized', 'artillery'],
-        air: ['fighter', 'transport', 'awacs'],
-        sea: ['destroyer', 'carrier', 'submarine']
+        land: ['Infantry','Air Defence', 'Mechanized', 'Motorized' ,'Field Artillery', 'Propelled Artillery' , 'Armored' , 'Engineer' , 'Supply' ],
+        air: ['Attack', 'Bomber', 'Fighter' , 'Fighter Bomber', 'Cargo' , 'Jammer', 'Tanker' , 'Reconnaisance', 'Airborne Early Warning', 'Rotary Wing'],
+        sea: ['Carrier', 'Surface Combatant', 'Merchant Ship']
     };
 
     const types = allTypes[domain] || [];
@@ -90,6 +90,11 @@ function updateMarkerPreview() {
     const identity = document.getElementById('marker-identity')?.value;
     const type = document.getElementById('marker-type')?.value;
     const previewImg = document.getElementById('marker-preview-img');
+
+    const sanitizedType = type.toLowerCase().replace(/\s+/g, '_');
+    const fileName = `${sanitizedType}_${identity}.svg`;
+    const imageUrl = `milspec_icons/${fileName}`;
+
 
     if (!previewImg) return;
 
