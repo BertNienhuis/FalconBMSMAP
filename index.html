@@ -1,102 +1,85 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Falcon BMS Flat Map</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="dark-content">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.css">
-    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+  <meta charset="utf-8">
+  <title>Falcon BMS Flat Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="dark-content">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.css">
+  <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+
+<!-- Map & Mouse Position -->
 <div id="map" class="map"></div>
 <div id="mouse-position"></div>
 
 <!-- Control Bar -->
 <div id="control-bar">
-    <div class="tool-group">
-        <label for="theater-select" class="button" style="padding: 5px;">
-            <i data-lucide="map"></i>
-            <select id="theater-select" style="margin-left: 6px;">
-                <option value="Korea">Korea</option>
-                <option value="Israel">Israel</option>
-                <option value="Balkans">Balkans</option>
-            </select>
-        </label>
-    </div>
-    <div class="tool-group">
-        <label for="ini-loader" class="button file-upload-label" title="Load mission">
-            <i data-lucide="folder-open"></i> Open mission
-        </label>
-        <input type="file" id="ini-loader" accept=".ini" />
-        <button id="clear-button" class="button" title="Clear mission">
-            <i data-lucide="trash-2"></i> Clear mission
-        </button>
-        <button id="ruler-button" class="button" title="Measure distance (L)">
-            <i data-lucide="ruler"></i> Ruler (L)
-        </button>
-        <button id="marker-button" class="button" title="Add marker">
-            <i data-lucide="map-pin"></i> Marker
-        </button>
-    </div>
-    <div class="tool-group">
-        <button id="whiteboard-pencil" class="button" title="Free draw (Q)">
-            <i data-lucide="pencil"></i> Pencil (Q)
-        </button>
-        <button id="whiteboard-polygon" class="button" title="Draw polygon (W)">
-            <i data-lucide="triangle"></i> Polygon (W)
-        </button>
-        <button id="whiteboard-circle" class="button" title="Draw circle (E)">
-            <i data-lucide="circle"></i> Circle (E)
-        </button>
-        <button id="whiteboard-rect" class="button" title="Draw rectangle (R)">
-            <i data-lucide="square"></i> Rectangle (R)
-        </button>
-    </div>
-    <div class="tool-group">
-        <button id="whiteboard-undo" class="button" title="Undo (Z)">
-            <i data-lucide="undo-2"></i> Undo (Z)
-        </button>
-        <button id="whiteboard-redo" class="button" title="Redo (Y)">
-            <i data-lucide="redo-2"></i> Redo (Y)
-        </button>
-        <button id="whiteboard-eraser" class="button" title="Clear whiteboard">
-            <i data-lucide="eraser"></i> Clean
-        </button>
-    </div>
+  <div class="tool-group">
+    <label for="theater-select" class="button">
+      <i data-lucide="map"></i>
+      <select id="theater-select">
+        <option value="Korea">Korea</option>
+        <option value="Israel">Israel</option>
+        <option value="Balkans">Balkans</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="tool-group">
+    <label for="ini-loader" class="button file-upload-label" title="Load mission">
+      <i data-lucide="folder-open"></i> Open
+    </label>
+    <input type="file" id="ini-loader" accept=".ini">
+    <button id="clear-button" class="button" title="Clear mission"><i data-lucide="trash-2"></i> Clear</button>
+    <button id="ruler-button" class="button" title="Measure distance (L)"><i data-lucide="ruler"></i> Ruler</button>
+    <button id="marker-button" class="button" title="Add marker"><i data-lucide="map-pin"></i> Marker</button>
+  </div>
+
+  <div class="tool-group">
+    <button id="whiteboard-pencil" class="button" title="Free draw (Q)"><i data-lucide="pencil"></i> Pencil</button>
+    <button id="whiteboard-polygon" class="button" title="Polygon (W)"><i data-lucide="triangle"></i> Polygon</button>
+    <button id="whiteboard-circle" class="button" title="Circle (E)"><i data-lucide="circle"></i> Circle</button>
+    <button id="whiteboard-rect" class="button" title="Rectangle (R)"><i data-lucide="square"></i> Rectangle</button>
+  </div>
+
+  <div class="tool-group">
+    <button id="whiteboard-undo" class="button" title="Undo (Z)"><i data-lucide="undo-2"></i> Undo</button>
+    <button id="whiteboard-redo" class="button" title="Redo (Y)"><i data-lucide="redo-2"></i> Redo</button>
+    <button id="whiteboard-eraser" class="button" title="Clear whiteboard"><i data-lucide="eraser"></i> Clean</button>
+  </div>
 </div>
+
+<!-- Marker Popup -->
 <div id="marker-popup" class="marker-popup hidden">
-    <label>
-        Identity:
-        <select id="marker-identity">
-            <option value="friend">Friend</option>
-            <option value="hostile">Hostile</option>
-            <option value="neutral">Neutral</option>
-            <option value="unknown">Unknown</option>
-        </select>
-    </label>
-    <label>
-        Domain:
-        <select id="marker-domain">
-            <option value="land">Land</option>
-            <option value="air">Air</option>
-            <option value="sea">Sea</option>
-        </select>
-    </label>
-    <label>
-        Type:
-        <select id="marker-type"></select>
-    </label>
-    <div>
-        <img id="marker-preview-img" style="width: 40px; height: 40px; margin-top: 5px;" />
-    </div>
+  <label>Identity:
+    <select id="marker-identity">
+      <option value="friend">Friend</option>
+      <option value="hostile">Hostile</option>
+      <option value="neutral">Neutral</option>
+      <option value="unknown">Unknown</option>
+    </select>
+  </label>
+  <label>Domain:
+    <select id="marker-domain">
+      <option value="land">Land</option>
+      <option value="air">Air</option>
+      <option value="sea">Sea</option>
+    </select>
+  </label>
+  <label>Type:
+    <select id="marker-type"></select>
+  </label>
+  <div>
+    <img id="marker-preview-img" style="width: 40px; height: 40px; margin-top: 5px;" />
+  </div>
 </div>
 
-
-
+<!-- Scripts -->
 <script src="bms-ini-loader-flat.js"></script>
 <script src="bms-airport-layer.js"></script>
 <script src="bms-ruler-tool.js"></script>
@@ -104,201 +87,155 @@
 <script src="bms-marker-layer.js"></script>
 
 <script>
-    let currentTheater = 'Korea';
-    let currentSettings = getTheaterSettings(currentTheater);
-    let map, tileLayer;
-    let dragPanInteraction = null;
-    const tileSize = 256;
+  let map, tileLayer;
+  let currentTheater = 'Korea';
+  let currentSettings = getTheaterSettings(currentTheater);
+  const tileSize = 256;
+  let dragPanInteraction = null;
 
-    window.getCurrentScale = () => currentSettings.scale;
+  window.getCurrentScale = () => currentSettings.scale;
 
-    const mousePositionControl = new ol.control.MousePosition({
-        coordinateFormat: (coord) => `X: ${coord[0].toFixed(0)}, Y: ${coord[1].toFixed(0)}`,
-        projection: undefined,
-        className: 'custom-mouse-position',
-        target: document.getElementById('mouse-position'),
-        undefinedHTML: '&nbsp;'
+  const mousePositionControl = new ol.control.MousePosition({
+    coordinateFormat: coord => `X: ${coord[0].toFixed(0)}, Y: ${coord[1].toFixed(0)}`,
+    className: 'custom-mouse-position',
+    target: document.getElementById('mouse-position')
+  });
+
+  function getTheaterSettings(theater) {
+    const settings = {
+      Korea: { size: 16384, center: [8192, 8192], zoom: 2, scale: 0.004876 },
+      Israel: { size: 8192, center: [4096, 4096], zoom: 2, scale: 0.002438 },
+      Balkans: { size: 8192, center: [4096, 4096], zoom: 2, scale: 0.002438 }
+    };
+    return settings[theater] || settings.Korea;
+  }
+
+  function getResolutions(size) {
+    return Array.from({ length: 7 }, (_, z) => size / tileSize / 2 ** z);
+  }
+
+  function createTileLayer(theater, projection, resolutions) {
+    return new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        projection,
+        tileGrid: new ol.tilegrid.TileGrid({
+          extent: [0, 0, projection.getExtent()[2], projection.getExtent()[3]],
+          origin: [0, projection.getExtent()[3]],
+          tileSize,
+          resolutions
+        }),
+        tileUrlFunction: ([z, x, y]) =>
+          `${theater}/${z}/${x}/${Math.pow(2, z) - y - 1}.png`
+      }),
+      maxZoom: 7
+    });
+  }
+
+  function initMap(theater) {
+    const settings = getTheaterSettings(theater);
+    currentSettings = settings;
+
+    const projection = new ol.proj.Projection({
+      code: 'FALCON_PIXELS',
+      units: 'pixels',
+      extent: [0, 0, settings.size, settings.size]
     });
 
-    function getTheaterSettings(theater) {
-        if (theater === 'Israel') {
-            return {
-                size: 8192,
-                center: [4096, 4096],
-                zoom: 2,
-                scale: 0.002438
-            };
-        } else if (theater === 'Balkans') {
-            return {
-                size: 8192,
-                center: [4096, 4096],
-                zoom: 2,
-                scale: 0.002438
-            };
-        } else {
-            return {
-                size: 16384,
-                center: [8192, 8192],
-                zoom: 2,
-                scale: 0.004876
-            };
-        }
+    const resolutions = getResolutions(settings.size);
+    mousePositionControl.setProjection(projection);
+
+    tileLayer = createTileLayer(theater, projection, resolutions);
+
+    map = new ol.Map({
+      target: 'map',
+      layers: [tileLayer],
+      ccontrols: ol.control.defaults.defaults().extend([mousePositionControl]),
+      view: new ol.View({
+        projection,
+        center: settings.center,
+        zoom: settings.zoom,
+        resolutions,
+        extent: projection.getExtent()
+      })
+    });
+
+    dragPanInteraction = map.getInteractions().getArray().find(i => i instanceof ol.interaction.DragPan);
+
+    // Init tools
+    addINILoaderUI(map);
+    initWhiteboard(map);
+    initMarkerTool(map);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    lucide.createIcons();
+    initMap(currentTheater);
+  });
+
+  // Event: Switch Theater
+  document.getElementById('theater-select').addEventListener('change', e => {
+    currentTheater = e.target.value;
+    map.setTarget(null);
+    document.getElementById('map').innerHTML = '';
+    initMap(currentTheater);
+  });
+
+  // Ruler
+  document.getElementById('ruler-button').addEventListener('click', () => {
+    const btn = document.getElementById('ruler-button');
+    isRulerActive ? disableRuler(map, btn) : enableRuler(map, btn);
+  });
+
+  // Marker toggle
+  document.getElementById('marker-button').addEventListener('click', () => {
+    isMarkerMode = !isMarkerMode;
+    document.getElementById('marker-button').classList.toggle('active', isMarkerMode);
+    document.getElementById('marker-popup').classList.toggle('hidden', !isMarkerMode);
+    dragPanInteraction?.setActive(!isMarkerMode);
+  });
+
+  // Clear loaded mission
+  document.getElementById('clear-button').addEventListener('click', () => {
+    if (flightPathLayer) {
+      map.removeLayer(flightPathLayer);
+      flightPathLayer = null;
     }
+  });
 
-    function getResolutions(size) {
-        return Array.from({ length: 7 }, (_, z) => size / tileSize / Math.pow(2, z));
-    }
+  // Undo/Redo
+  document.getElementById('whiteboard-undo')?.addEventListener('click', () => {
+    const f = undoStack.pop();
+    if (f) whiteboardSource.removeFeature(f), redoStack.push(f);
+  });
 
-    function createTileLayer(theater, projection, resolutions) {
-        return new ol.layer.Tile({
-            source: new ol.source.XYZ({
-                tileUrlFunction: function(tileCoord) {
-                    if (!tileCoord) return '';
-                    const z = tileCoord[0];
-                    const x = tileCoord[1];
-                    const y = Math.pow(2, z) - tileCoord[2] - 1;
-                    return `${theater}/${z}/${x}/${y}.png`;
-                },
-                tileGrid: new ol.tilegrid.TileGrid({
-                    extent: [0, 0, projection.getExtent()[2], projection.getExtent()[3]],
-                    origin: [0, projection.getExtent()[3]],
-                    tileSize: tileSize,
-                    resolutions: resolutions
-                }),
-                projection: projection,
-                maxZoom: 7
-            })
-        });
-    }
+  document.getElementById('whiteboard-redo')?.addEventListener('click', () => {
+    const f = redoStack.pop();
+    if (f) whiteboardSource.addFeature(f), undoStack.push(f);
+  });
 
-    function initMap(theater) {
-        const settings = getTheaterSettings(theater);
-        currentSettings = settings;
-        const { size, center, zoom } = settings;
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if (/input|textarea/i.test(e.target.tagName)) return;
 
-        const projection = new ol.proj.Projection({
-            code: 'FALCON_PIXELS',
-            units: 'pixels',
-            extent: [0, 0, size, size]
-        });
+    const shortcuts = {
+      q: 'whiteboard-pencil',
+      w: 'whiteboard-polygon',
+      e: 'whiteboard-circle',
+      r: 'whiteboard-rect',
+      t: 'whiteboard-eraser',
+      l: 'ruler-button',
+      z: 'whiteboard-undo',
+      y: 'whiteboard-redo'
+    };
 
-        const resolutions = getResolutions(size);
-        mousePositionControl.setProjection(projection);
+    const id = shortcuts[e.key.toLowerCase()];
+    if (id) document.getElementById(id)?.click();
+  });
 
-        tileLayer = createTileLayer(theater, projection, resolutions);
-
-        map = new ol.Map({
-            target: 'map',
-            layers: [tileLayer],
-            controls: ol.control.defaults.defaults().extend([mousePositionControl]),
-            view: new ol.View({
-                projection: projection,
-                center: center,
-                zoom: zoom,
-                resolutions: resolutions,
-                extent: [0, 0, size, size]
-            })
-        });
-
-        // ✅ After map is created, assign the fresh interaction
-        dragPanInteraction = map.getInteractions().getArray().find(i => i instanceof ol.interaction.DragPan);
-
-        // Now tools can safely use it
-        addINILoaderUI(map);
-        initWhiteboard(map);
-        initMarkerTool(map);
-    }
-
-
-    document.addEventListener("DOMContentLoaded", () => {
-        lucide.createIcons();
-        initMap(currentTheater);
-    });
-
-    document.getElementById('theater-select').addEventListener('change', (e) => {
-        currentTheater = e.target.value;
-        currentSettings = getTheaterSettings(currentTheater);
-
-        if (flightPathLayer) {
-            map.removeLayer(flightPathLayer);
-            flightPathLayer = null;
-        }
-
-        // ✅ Clean up old whiteboard state
-        if (whiteboardLayer) {
-            map.removeLayer(whiteboardLayer);
-            whiteboardLayer = null;
-        }
-        if (whiteboardDrawInteraction) {
-            map.removeInteraction(whiteboardDrawInteraction);
-            whiteboardDrawInteraction = null;
-        }
-
-        whiteboardSource = null;
-
-        disableRuler(map);
-        map.setTarget(null);
-        document.getElementById('map').innerHTML = '';
-        initMap(currentTheater);
-    });
-
-    // Toggle marker mode
-    document.getElementById('marker-button')?.addEventListener('click', () => {
-        isMarkerMode = !isMarkerMode;
-        document.getElementById('marker-button').classList.toggle('active', isMarkerMode);
-        document.getElementById('marker-popup')?.classList.toggle('hidden', !isMarkerMode);
-
-        const dragPan = map.getInteractions().getArray().find(i => i instanceof ol.interaction.DragPan);
-        dragPan?.setActive(!isMarkerMode);
-    });
-
-
-    document.getElementById('clear-button').addEventListener('click', () => {
-        if (flightPathLayer) {
-            map.removeLayer(flightPathLayer);
-            flightPathLayer = null;
-        }
-    });
-
-    document.getElementById('ruler-button').addEventListener('click', () => {
-        const btn = document.getElementById('ruler-button');
-        isRulerActive ? disableRuler(map, btn) : enableRuler(map, btn);
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-        switch (e.key.toLowerCase()) {
-            case 'q': document.getElementById('whiteboard-pencil')?.click(); break;
-            case 'w': document.getElementById('whiteboard-polygon')?.click(); break;
-            case 'e': document.getElementById('whiteboard-circle')?.click(); break;
-            case 'r': document.getElementById('whiteboard-rect')?.click(); break;
-            case 't': document.getElementById('whiteboard-eraser')?.click(); break;
-            case 'l': document.getElementById('ruler-button')?.click(); break;
-            case 'z': document.getElementById('whiteboard-undo')?.click(); break;
-            case 'y': document.getElementById('whiteboard-redo')?.click(); break;
-        }
-    });
-
-    document.addEventListener('touchmove', function(e) {
-        if (isRulerActive) e.preventDefault();
-    }, { passive: false });
-
-    document.getElementById('whiteboard-undo')?.addEventListener('click', () => {
-        const feature = undoStack.pop();
-        if (feature) {
-            whiteboardSource.removeFeature(feature);
-            redoStack.push(feature);
-        }
-    });
-
-    document.getElementById('whiteboard-redo')?.addEventListener('click', () => {
-        const feature = redoStack.pop();
-        if (feature) {
-            whiteboardSource.addFeature(feature);
-            undoStack.push(feature);
-        }
-    });
+  // Touch handling
+  document.addEventListener('touchmove', e => {
+    if (isRulerActive) e.preventDefault();
+  }, { passive: false });
 </script>
 </body>
 </html>
