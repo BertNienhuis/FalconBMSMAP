@@ -183,16 +183,24 @@
             flightPathLayer = null;
         }
 
-       whiteboardSource?.clear?.();
-        if (whiteboardLayer) map.removeLayer(whiteboardLayer);
-        if (whiteboardDrawInteraction) map.removeInteraction(whiteboardDrawInteraction);
-        disableRuler(map);
-        
+        // ✅ Clean up old whiteboard state
+        if (whiteboardLayer) {
+            map.removeLayer(whiteboardLayer);
+            whiteboardLayer = null;
+        }
+        if (whiteboardDrawInteraction) {
+            map.removeInteraction(whiteboardDrawInteraction);
+            whiteboardDrawInteraction = null;
+        }
 
+        whiteboardSource = null;
+
+        disableRuler(map);
         map.setTarget(null);
         document.getElementById('map').innerHTML = '';
         initMap(currentTheater);
     });
+
 
     document.getElementById('clear-button').addEventListener('click', () => {
         if (flightPathLayer) {

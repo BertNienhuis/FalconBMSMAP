@@ -10,7 +10,7 @@ const undoStack = [];
 const redoStack = [];
 
 function initWhiteboard(map) {
-    // 🧹 Clear old state (important when switching maps)
+    // Clear existing interaction and layer (in case of re-init)
     if (whiteboardDrawInteraction) {
         map.removeInteraction(whiteboardDrawInteraction);
         whiteboardDrawInteraction = null;
@@ -19,29 +19,28 @@ function initWhiteboard(map) {
         map.removeLayer(whiteboardLayer);
         whiteboardLayer = null;
     }
-    whiteboardSource = null;
-    whiteboardEnabled = false;
 
-    // 🧲 Save dragPan interaction
-    whiteboardDragPan = map.getInteractions().getArray().find(i => i instanceof ol.interaction.DragPan);
-
-    // Create new source + layer
     whiteboardSource = new ol.source.Vector();
     whiteboardLayer = new ol.layer.Vector({
         source: whiteboardSource,
-        style: feature => new ol.style.Style({
-            stroke: new ol.style.Stroke({
-                color: currentColor,
-                width: 2
-            }),
-            fill: new ol.style.Fill({
-                color: 'rgba(0, 0, 0, 0)'
-            })
-        })
+        style: feature => {
+            return new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: currentColor,
+                    width: 2
+                }),
+                fill: new ol.style.Fill({
+                    color: 'rgba(0, 0, 0, 0)' // transparent fill
+                })
+            });
+        }
     });
     map.addLayer(whiteboardLayer);
 
-    // Button bindings
+    // Rebind drag pan from new map
+    whiteboardDragPan = map.getInteractions().getArray().find(i => i instanceof ol.interaction.DragPan);
+
+    // Rebind tool buttons
     const tools = {
         'whiteboard-pencil': 'Freehand',
         'whiteboard-rect': 'Rectangle',
@@ -52,10 +51,10 @@ function initWhiteboard(map) {
     for (const [id, type] of Object.entries(tools)) {
         const btn = document.getElementById(id);
         if (btn) {
-            btn.addEventListener('click', () => {
+            btn.onclick = () => {
                 toggleDraw(map, type);
                 setActiveButton(btn);
-            });
+            };
         }
     }
 
@@ -63,6 +62,7 @@ function initWhiteboard(map) {
         whiteboardSource.clear();
     });
 }
+
 
 function toggleDraw(map, type) {
     if (currentDrawType === type && whiteboardEnabled) {
