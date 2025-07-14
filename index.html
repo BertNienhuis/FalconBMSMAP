@@ -37,6 +37,9 @@
         <button id="ruler-button" class="button" title="Measure distance (L)">
             <i data-lucide="ruler"></i> Ruler (L)
         </button>
+        <button id="marker-button" class="button" title="Add marker">
+            <i data-lucide="map-pin"></i> Marker
+        </button>
     </div>
     <div class="tool-group">
         <button id="whiteboard-pencil" class="button" title="Free draw (Q)">
@@ -64,11 +67,40 @@
         </button>
     </div>
 </div>
+<div id="marker-popup" class="marker-popup hidden">
+    <label>
+        Identity:
+        <select id="marker-identity">
+            <option value="friend">Friend</option>
+            <option value="hostile">Hostile</option>
+            <option value="neutral">Neutral</option>
+            <option value="unknown">Unknown</option>
+        </select>
+    </label>
+    <label>
+        Domain:
+        <select id="marker-domain">
+            <option value="land">Land</option>
+            <option value="air">Air</option>
+            <option value="sea">Sea</option>
+        </select>
+    </label>
+    <label>
+        Type:
+        <select id="marker-type"></select>
+    </label>
+    <div>
+        <img id="marker-preview-img" style="width: 40px; height: 40px; margin-top: 5px;" />
+    </div>
+</div>
+
+
 
 <script src="bms-ini-loader-flat.js"></script>
 <script src="bms-airport-layer.js"></script>
 <script src="bms-ruler-tool.js"></script>
 <script src="bms-whiteboard.js"></script>
+<script src="bms-marker-layer.js"></script>
 
 <script>
     let currentTheater = 'Korea';
@@ -166,6 +198,7 @@
         // Now tools can safely use it
         addINILoaderUI(map);
         initWhiteboard(map);
+        initMarkerTool(map);
     }
 
 
@@ -199,6 +232,16 @@
         map.setTarget(null);
         document.getElementById('map').innerHTML = '';
         initMap(currentTheater);
+    });
+
+    // Toggle marker mode
+    document.getElementById('marker-button')?.addEventListener('click', () => {
+        isMarkerMode = !isMarkerMode;
+        document.getElementById('marker-button').classList.toggle('active', isMarkerMode);
+        document.getElementById('marker-popup')?.classList.toggle('hidden', !isMarkerMode);
+
+        const dragPan = map.getInteractions().getArray().find(i => i instanceof ol.interaction.DragPan);
+        dragPan?.setActive(!isMarkerMode);
     });
 
 
