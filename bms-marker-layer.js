@@ -18,7 +18,8 @@ function initMarkerTool(map) {
 
         if (!identity || !domain || !type) return;
 
-        const fileName = `${type}_${identity}.svg`;
+        const sanitizedType = type.toLowerCase().replace(/\s+/g, '_');
+        const fileName = `${sanitizedType}_${identity}.svg`;
         const imageUrl = `milspec_icons/${fileName}`;
 
         const existing = map.forEachFeatureAtPixel(e.pixel, f => f, {
@@ -99,7 +100,6 @@ function updateMarkerPreview() {
     if (!previewImg) return;
 
     if (identity && type) {
-        const fileName = `${type}_${identity}.svg`;
         previewImg.src = `milspec_icons/${fileName}`;
     } else {
         previewImg.src = '';
