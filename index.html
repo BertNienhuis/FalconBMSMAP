@@ -149,7 +149,7 @@
     map = new ol.Map({
       target: 'map',
       layers: [tileLayer],
-      ccontrols: ol.control.defaults.defaults().extend([mousePositionControl]),
+      controls: ol.control.defaults.defaults().extend([mousePositionControl]),
       view: new ol.View({
         projection,
         center: settings.center,
