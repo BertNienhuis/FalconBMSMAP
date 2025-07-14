@@ -23,6 +23,7 @@
             <select id="theater-select" style="margin-left: 6px;">
                 <option value="Korea">Korea</option>
                 <option value="Israel">Israel</option>
+                <option value="Balkans">Balkans</option>
             </select>
         </label>
     </div>
@@ -121,6 +122,13 @@
 
     function getTheaterSettings(theater) {
         if (theater === 'Israel') {
+            return {
+                size: 8192,
+                center: [4096, 4096],
+                zoom: 2,
+                scale: 0.002438
+            };
+        } else if (theater === 'Balkans') {
             return {
                 size: 8192,
                 center: [4096, 4096],
