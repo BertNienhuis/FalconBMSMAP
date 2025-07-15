@@ -132,10 +132,11 @@
                 disableBullseyeMode(map);
             }
 
-            // Disable whiteboard draw interaction (if using it as a tool too)
+            // Deactivate whiteboard properly
             if (whiteboardDrawInteraction) {
                 map.removeInteraction(whiteboardDrawInteraction);
                 whiteboardDrawInteraction = null;
+                whiteboardEnabled = false;
             }
 
             // Reset active UI buttons
