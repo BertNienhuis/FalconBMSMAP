@@ -104,7 +104,6 @@
         let currentSettings = getTheaterSettings(currentTheater);
         const tileSize = 256;
         let dragPanInteraction = null;
-
         window.getCurrentScale = () => currentSettings.scale;
 
         const mousePositionControl = new ol.control.MousePosition({
@@ -112,6 +111,37 @@
             className: 'custom-mouse-position',
             target: document.getElementById('mouse-position')
         });
+
+        function deactivateAllTools() {
+            // Disable ruler
+            if (isRulerActive) {
+                disableRuler(map, document.getElementById('ruler-button'));
+            }
+
+            // Disable marker
+            if (isMarkerMode) {
+                isMarkerMode = false;
+                document.getElementById('marker-button').classList.remove('active');
+                document.getElementById('marker-popup').classList.add('hidden');
+                dragPanInteraction?.setActive(true);
+                map.getTargetElement().style.cursor = '';
+            }
+
+            // Disable bullseye
+            if (isBullseyeMode) {
+                disableBullseyeMode(map);
+            }
+
+            // Disable whiteboard draw interaction (if using it as a tool too)
+            if (whiteboardDrawInteraction) {
+                map.removeInteraction(whiteboardDrawInteraction);
+                whiteboardDrawInteraction = null;
+            }
+
+            // Reset active UI buttons
+            document.querySelectorAll('#control-bar .button').forEach(btn => btn.classList.remove('active'));
+        }
+
 
         function getTheaterSettings(theater) {
             const settings = {
@@ -199,28 +229,30 @@
 
         // Ruler
         document.getElementById('ruler-button').addEventListener('click', () => {
-            const btn = document.getElementById('ruler-button');
-            isRulerActive ? disableRuler(map, btn) : enableRuler(map, btn);
+            const isNowActive = !isRulerActive;
+            deactivateAllTools();
+            if (isNowActive) enableRuler(map, document.getElementById('ruler-button'));
         });
 
         // Marker toggle
         document.getElementById('marker-button').addEventListener('click', () => {
-            isMarkerMode = !isMarkerMode;
-
-            const markerBtn = document.getElementById('marker-button');
-            markerBtn.classList.toggle('active', isMarkerMode);
-            document.getElementById('marker-popup').classList.toggle('hidden', !isMarkerMode);
-
-            map.getTargetElement().style.cursor = isMarkerMode ? 'crosshair' : '';
-            dragPanInteraction?.setActive(!isMarkerMode);
+            const wasActive = isMarkerMode;
+            deactivateAllTools();
+            if (!wasActive) {
+                isMarkerMode = true;
+                const markerBtn = document.getElementById('marker-button');
+                markerBtn.classList.add('active');
+                document.getElementById('marker-popup').classList.remove('hidden');
+                map.getTargetElement().style.cursor = 'crosshair';
+                dragPanInteraction?.setActive(false);
+            }
         });
 
+        // Bullseye toggle
         document.getElementById('bullseye-button').addEventListener('click', () => {
-            if (isBullseyeMode) {
-                disableBullseyeMode(map);
-            } else {
-                enableBullseyeMode(map);
-            }
+            const wasActive = isBullseyeMode;
+            deactivateAllTools();
+            if (!wasActive) enableBullseyeMode(map);
         });
 
         // Clear loaded mission
