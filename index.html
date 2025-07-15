@@ -63,6 +63,16 @@
             <button id="whiteboard-eraser" class="button" title="Clear whiteboard"><i data-lucide="eraser"></i>
                 Clean</button>
         </div>
+        <div class="tool-group">
+            <button id="export-layers" class="button" title="Export layers">
+                <i data-lucide="upload"></i> Export
+            </button>
+            <label class="button" title="Import layers">
+                <i data-lucide="download"></i> Import
+                <input type="file" id="import-layers" accept=".json" style="display: none;">
+            </label>
+        </div>
+
     </div>
 
     <!-- Marker Popup -->
@@ -96,6 +106,7 @@
     <script src="bms-whiteboard.js"></script>
     <script src="bms-marker-layer.js"></script>
     <script src="bms-bullseye.js"></script>
+    <script src="bms-export-import.js"></script>
 
 
     <script>
@@ -298,6 +309,10 @@
         document.addEventListener('touchmove', e => {
             if (isRulerActive) e.preventDefault();
         }, { passive: false });
+
+    
+
+
 
     </script>
 </body>

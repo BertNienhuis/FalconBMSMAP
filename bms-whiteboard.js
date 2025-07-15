@@ -69,6 +69,9 @@ function initWhiteboard(map) {
         }
     }
 
+    window.whiteboardLayer = whiteboardLayer;
+    window.whiteboardSource = whiteboardSource;
+
     document.getElementById('whiteboard-eraser')?.addEventListener('click', () => {
         whiteboardSource.clear();
     });
@@ -188,3 +191,4 @@ function setActiveButton(activeBtn) {
     });
     activeBtn.classList.add('active');
 }
+

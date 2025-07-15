@@ -134,7 +134,7 @@ canvas {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    width: 170px;
+    width: 190px;
   }
 
   .hidden {

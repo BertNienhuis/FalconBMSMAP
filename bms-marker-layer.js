@@ -8,8 +8,23 @@ function initMarkerTool(map) {
     markerLayer = new ol.layer.Vector({ source: markerSource });
     map.addLayer(markerLayer);
 
+  
+
+
     // Handle click to add/remove marker
     map.on('click', (e) => {
+        const clickedFeature = map.forEachFeatureAtPixel(e.pixel, f => f, {
+            layerFilter: l => l === markerLayer
+        });
+
+        if (clickedFeature) {
+            markerSource.removeFeature(clickedFeature);
+            return;
+        }
+
+        if (!isMarkerMode) return;
+
+        // Only add marker if mode is enabled
         if (!isMarkerMode) return;
 
         const identity = document.querySelector('input[name="marker-identity"]:checked')?.value;
@@ -22,31 +37,25 @@ function initMarkerTool(map) {
         const fileName = `${sanitizedType}_${identity}.svg`;
         const imageUrl = `milspec_icons/${fileName}`;
 
-        const existing = map.forEachFeatureAtPixel(e.pixel, f => f, {
-            layerFilter: l => l === markerLayer
-        });
-
-        if (existing) {
-            markerSource.removeFeature(existing);
-            return;
-        }
-
         const marker = new ol.Feature({
-            geometry: new ol.geom.Point(e.coordinate)
+            geometry: new ol.geom.Point(e.coordinate),
+            iconUrl: imageUrl
         });
 
-        marker.setStyle(new ol.style.Style({
-            image: new ol.style.Icon({
-                src: imageUrl,
-                scale: 0.1,
-                anchor: [0.5, 1]
-            })
-        }));
+        if (!window.markerLayer) {
+            window.markerSource = new ol.source.Vector();
+            window.markerLayer = new ol.layer.Vector({ source: window.markerSource });
+            map.addLayer(window.markerLayer);
+        }
+    
+        markerSource = window.markerSource;
+        markerLayer = window.markerLayer;
 
+        marker.setStyle(getMarkerStyle(marker));
         markerSource.addFeature(marker);
     });
 
-    
+
 
     // Populate dropdowns and hook up preview update
     const domainSelect = document.getElementById('marker-domain');
@@ -55,19 +64,19 @@ function initMarkerTool(map) {
         updateIdentityOptions(); // <- fix!
         updateMarkerPreview();
     });
-    
+
 
     const typeSelect = document.getElementById('marker-type');
     typeSelect?.addEventListener('change', updateMarkerPreview);
 
-    
+
 
     document.getElementById('marker-type')?.addEventListener('change', () => {
-    updateIdentityOptions();
-    updateMarkerPreview();
+        updateIdentityOptions();
+        updateMarkerPreview();
     });
-        
-    
+
+
 
     // Initial population
     populateMarkerTypes(domainSelect?.value || 'land');
@@ -83,8 +92,8 @@ function populateMarkerTypes(domain) {
     typeSelect.innerHTML = '';
 
     const allTypes = {
-        land: ['Infantry','Air Defence', 'Mechanized', 'Motorized' ,'Field Artillery', 'Propelled Artillery' , 'Armored' , 'Engineer' , 'Supply' ],
-        air: ['Attack', 'Bomber', 'Fighter' , 'Fighter Bomber', 'Cargo' , 'Jammer', 'Tanker' , 'Reconnaisance', 'Airborne Early Warning', 'Rotary Wing'],
+        land: ['Infantry', 'Air Defence', 'Mechanized', 'Motorized', 'Field Artillery', 'Propelled Artillery', 'Armored', 'Engineer', 'Supply'],
+        air: ['Attack', 'Bomber', 'Fighter', 'Fighter Bomber', 'Cargo', 'Jammer', 'Tanker', 'Reconnaisance', 'Airborne Early Warning', 'Rotary Wing'],
         sea: ['Carrier', 'Surface Combatant', 'Merchant Ship']
     };
 
@@ -121,47 +130,62 @@ function updateIdentityOptions() {
     const type = document.getElementById('marker-type')?.value;
     const container = document.getElementById('marker-identity-options');
     if (!container || !domain || !type) return;
-  
+
     const identities = ['friend', 'hostile', 'neutral', 'unknown'];
     const sanitizedType = type.toLowerCase().replace(/\s+/g, '_');
-  
+
     container.innerHTML = '<legend><strong>Select Identity</strong>:</legend>';
-  
+
     identities.forEach(identity => {
-      const fileName = `${sanitizedType}_${identity}.svg`;
-      const imageUrl = `milspec_icons/${fileName}`;
-  
-      const label = document.createElement('label');
-      label.style.display = 'flex';
-      label.style.alignItems = 'center';
-      label.style.marginBottom = '4px';
-  
-      const input = document.createElement('input');
-      input.type = 'radio';
-      input.name = 'marker-identity';
-      input.value = identity;
-  
-      const img = document.createElement('img');
-      img.src = imageUrl;
-      img.alt = identity;
-      img.style.width = '24px';
-      img.style.height = '24px';
-      img.style.margin = '0 6px';
-  
-      label.appendChild(input);
-      label.appendChild(img);
-      label.appendChild(document.createTextNode(identity.charAt(0).toUpperCase() + identity.slice(1)));
-      container.appendChild(label);
+        const fileName = `${sanitizedType}_${identity}.svg`;
+        const imageUrl = `milspec_icons/${fileName}`;
+
+        const label = document.createElement('label');
+        label.style.display = 'flex';
+        label.style.alignItems = 'center';
+        label.style.marginBottom = '4px';
+
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = 'marker-identity';
+        input.value = identity;
+
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.alt = identity;
+        img.style.width = '24px';
+        img.style.height = '24px';
+        img.style.margin = '0 6px';
+
+        label.appendChild(input);
+        label.appendChild(img);
+        label.appendChild(document.createTextNode(identity.charAt(0).toUpperCase() + identity.slice(1)));
+        container.appendChild(label);
     });
-  
+
     // Automatically select first option and attach preview update
     const firstRadio = container.querySelector('input[type="radio"]');
     if (firstRadio) {
-      firstRadio.checked = true;
+        firstRadio.checked = true;
     }
-  
+
     container.querySelectorAll('input[name="marker-identity"]').forEach(radio => {
-      radio.addEventListener('change', updateMarkerPreview);
+        radio.addEventListener('change', updateMarkerPreview);
     });
-  }
-  
+}
+
+function getMarkerStyle(feature) {
+    const iconUrl = feature.get('iconUrl') || 'milspec_icons/default.svg';
+
+    return new ol.style.Style({
+        image: new ol.style.Icon({
+            src: iconUrl,
+            scale: 0.1,
+            anchor: [0.5, 1],
+            anchorXUnits: 'fraction',
+            anchorYUnits: 'fraction'
+        })
+    });
+}
+
+window.getMarkerStyle = getMarkerStyle; // Make it globally accessible
