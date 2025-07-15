@@ -52,8 +52,19 @@ function initWhiteboard(map) {
         const btn = document.getElementById(id);
         if (btn) {
             btn.onclick = () => {
-                toggleDraw(map, type);
-                setActiveButton(btn);
+                const isAlreadyActive = btn.classList.contains('active');
+                window.deactivateAllTools(map);
+                if (isAlreadyActive) {
+                    // Toggle OFF
+                    disableWhiteboardDrawing(map);
+                    whiteboardEnabled = false;
+                    btn.classList.remove('active');
+                } else {
+                    // Toggle ON
+                    
+                    toggleDraw(map, type);
+                    setActiveButton(btn);
+                }
             };
         }
     }
