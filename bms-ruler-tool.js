@@ -10,6 +10,7 @@ let rulerDragPan = null;
 function enableRuler(map, button) {
     if (isRulerActive) return;
     isRulerActive = true;
+    map.getTargetElement().style.cursor = 'crosshair';
     button?.classList.add('active');
 
     // Disable map drag
@@ -99,4 +100,6 @@ function disableRuler(map, button) {
     lineFeature = null;
     labelFeature = null;
     button?.classList.remove('active');
+    map.getTargetElement().style.cursor = '';
+
 }

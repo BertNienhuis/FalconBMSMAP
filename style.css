@@ -119,22 +119,56 @@ canvas {
     touch-action: none;
 }
 
+
+/* Marker Popup Container */
 .marker-popup {
     position: absolute;
     top: 10px;
-    left: 180px;
+    left: 174px;
     background: #ffffffa3;
     box-shadow: 2px 0 8px rgba(0,0,0,0.2);
     border: 1px solid #ccc;
     padding: 10px;
     z-index: 1000;
-    border-radius: 8px;
+    border-radius: 4px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-}
+    gap: 10px;
+    width: 170px;
+  }
 
-.hidden {
+  .hidden {
     display: none;
 }
 
+  
+  /* Each row with label + select */
+  .marker-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  /* Uniform label width */
+  .marker-row label {
+    width: 70px;
+  }
+  
+  /* Select box styling */
+  .marker-row select {
+    flex: 1;
+    max-width: 150px;
+  }
+  
+  /* Identity fieldset */
+  #marker-identity-options {
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    padding: 8px;
+  }
+  
+  /* Identity legend */
+  #marker-identity-options legend {
+    font-weight: bold;
+  }
+  

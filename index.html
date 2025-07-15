@@ -41,10 +41,10 @@
   </div>
 
   <div class="tool-group">
-    <button id="whiteboard-pencil" class="button" title="Free draw (Q)"><i data-lucide="pencil"></i> Pencil</button>
-    <button id="whiteboard-polygon" class="button" title="Polygon (W)"><i data-lucide="triangle"></i> Polygon</button>
-    <button id="whiteboard-circle" class="button" title="Circle (E)"><i data-lucide="circle"></i> Circle</button>
-    <button id="whiteboard-rect" class="button" title="Rectangle (R)"><i data-lucide="square"></i> Rectangle</button>
+    <button id="whiteboard-pencil" class="button" title="Free draw (Q)"><i data-lucide="pencil"></i> Pencil (q)</button>
+    <button id="whiteboard-polygon" class="button" title="Polygon (W)"><i data-lucide="triangle"></i> Polygon (w)</button>
+    <button id="whiteboard-circle" class="button" title="Circle (E)"><i data-lucide="circle"></i> Circle (e)</button>
+    <button id="whiteboard-rect" class="button" title="Rectangle (R)"><i data-lucide="square"></i> Rectangle (r)</button>
   </div>
 
   <div class="tool-group">
@@ -56,28 +56,27 @@
 
 <!-- Marker Popup -->
 <div id="marker-popup" class="marker-popup hidden">
-  <label>Identity:
-    <select id="marker-identity">
-      <option value="friend">Friend</option>
-      <option value="hostile">Hostile</option>
-      <option value="neutral">Neutral</option>
-      <option value="unknown">Unknown</option>
-    </select>
-  </label>
-  <label>Domain:
-    <select id="marker-domain">
-      <option value="land">Land</option>
-      <option value="air">Air</option>
-      <option value="sea">Sea</option>
-    </select>
-  </label>
-  <label>Type:
-    <select id="marker-type"></select>
-  </label>
-  <div>
-    <img id="marker-preview-img" style="width: 40px; height: 40px; margin-top: 5px;" />
+    <div class="marker-row">
+      <label for="marker-domain">Domain:</label>
+      <select id="marker-domain">
+        <option value="land">Land</option>
+        <option value="air">Air</option>
+        <option value="sea">Sea</option>
+      </select>
+    </div>
+  
+    <div class="marker-row">
+      <label for="marker-type">Type:</label>
+      <select id="marker-type"></select>
+    </div>
+  
+    <fieldset id="marker-identity-options">
+      <legend>Select Identity</legend>
+      <!-- Dynamically generated radio buttons go here -->
+    </fieldset>
   </div>
-</div>
+  
+  
 
 <!-- Scripts -->
 <script src="bms-ini-loader-flat.js"></script>
@@ -186,13 +185,18 @@
     isRulerActive ? disableRuler(map, btn) : enableRuler(map, btn);
   });
 
-  // Marker toggle
-  document.getElementById('marker-button').addEventListener('click', () => {
+    // Marker toggle
+    document.getElementById('marker-button').addEventListener('click', () => {
     isMarkerMode = !isMarkerMode;
-    document.getElementById('marker-button').classList.toggle('active', isMarkerMode);
+
+    const markerBtn = document.getElementById('marker-button');
+    markerBtn.classList.toggle('active', isMarkerMode);
     document.getElementById('marker-popup').classList.toggle('hidden', !isMarkerMode);
+
+    map.getTargetElement().style.cursor = isMarkerMode ? 'crosshair' : '';
     dragPanInteraction?.setActive(!isMarkerMode);
-  });
+    });
+
 
   // Clear loaded mission
   document.getElementById('clear-button').addEventListener('click', () => {

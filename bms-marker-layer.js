@@ -12,7 +12,7 @@ function initMarkerTool(map) {
     map.on('click', (e) => {
         if (!isMarkerMode) return;
 
-        const identity = document.getElementById('marker-identity')?.value;
+        const identity = document.querySelector('input[name="marker-identity"]:checked')?.value;
         const domain = document.getElementById('marker-domain')?.value;
         const type = document.getElementById('marker-type')?.value;
 
@@ -50,19 +50,29 @@ function initMarkerTool(map) {
 
     // Populate dropdowns and hook up preview update
     const domainSelect = document.getElementById('marker-domain');
-    const identitySelect = document.getElementById('marker-identity');
-    const typeSelect = document.getElementById('marker-type');
-
     domainSelect?.addEventListener('change', (e) => {
         populateMarkerTypes(e.target.value);
+        updateIdentityOptions(); // <- fix!
         updateMarkerPreview();
     });
+    
 
-    identitySelect?.addEventListener('change', updateMarkerPreview);
+    const typeSelect = document.getElementById('marker-type');
     typeSelect?.addEventListener('change', updateMarkerPreview);
+
+    
+
+    document.getElementById('marker-type')?.addEventListener('change', () => {
+    updateIdentityOptions();
+    updateMarkerPreview();
+    });
+        
+    
 
     // Initial population
     populateMarkerTypes(domainSelect?.value || 'land');
+    updateMarkerPreview();
+    updateIdentityOptions();
     updateMarkerPreview();
 }
 
@@ -88,7 +98,7 @@ function populateMarkerTypes(domain) {
 }
 
 function updateMarkerPreview() {
-    const identity = document.getElementById('marker-identity')?.value;
+    const identity = document.querySelector('input[name="marker-identity"]:checked')?.value;
     const type = document.getElementById('marker-type')?.value;
     const previewImg = document.getElementById('marker-preview-img');
 
@@ -105,3 +115,53 @@ function updateMarkerPreview() {
         previewImg.src = '';
     }
 }
+
+function updateIdentityOptions() {
+    const domain = document.getElementById('marker-domain')?.value;
+    const type = document.getElementById('marker-type')?.value;
+    const container = document.getElementById('marker-identity-options');
+    if (!container || !domain || !type) return;
+  
+    const identities = ['friend', 'hostile', 'neutral', 'unknown'];
+    const sanitizedType = type.toLowerCase().replace(/\s+/g, '_');
+  
+    container.innerHTML = '<legend><strong>Select Identity</strong>:</legend>';
+  
+    identities.forEach(identity => {
+      const fileName = `${sanitizedType}_${identity}.svg`;
+      const imageUrl = `milspec_icons/${fileName}`;
+  
+      const label = document.createElement('label');
+      label.style.display = 'flex';
+      label.style.alignItems = 'center';
+      label.style.marginBottom = '4px';
+  
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'marker-identity';
+      input.value = identity;
+  
+      const img = document.createElement('img');
+      img.src = imageUrl;
+      img.alt = identity;
+      img.style.width = '24px';
+      img.style.height = '24px';
+      img.style.margin = '0 6px';
+  
+      label.appendChild(input);
+      label.appendChild(img);
+      label.appendChild(document.createTextNode(identity.charAt(0).toUpperCase() + identity.slice(1)));
+      container.appendChild(label);
+    });
+  
+    // Automatically select first option and attach preview update
+    const firstRadio = container.querySelector('input[type="radio"]');
+    if (firstRadio) {
+      firstRadio.checked = true;
+    }
+  
+    container.querySelectorAll('input[name="marker-identity"]').forEach(radio => {
+      radio.addEventListener('change', updateMarkerPreview);
+    });
+  }
+  

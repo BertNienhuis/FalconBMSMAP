@@ -253,7 +253,9 @@ function drawRouteOnMap(map, data) {
     }
 
     // Create and add new vector layer
-    flightPathLayer = new ol.layer.Vector({ source: vectorSource });
+    flightPathLayer = new ol.layer.Vector({ source: vectorSource  });
+
+
     map.addLayer(flightPathLayer);
 
 
