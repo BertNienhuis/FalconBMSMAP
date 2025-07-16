@@ -1,22 +1,28 @@
 let markerLayer = null;
 let markerSource = null;
 let isMarkerMode = false;
+let markerClickHandler = null;
 
 function initMarkerTool(map) {
-    // Use existing globals from import or create fresh ones
-    if (window.markerSource && window.markerLayer) {
-        markerSource = window.markerSource;
-        markerLayer = window.markerLayer;
-    } else {
-        markerSource = new ol.source.Vector();
-        markerLayer = new ol.layer.Vector({ source: markerSource });
-        map.addLayer(markerLayer);
-        window.markerSource = markerSource;
-        window.markerLayer = markerLayer;
+    // 🔁 Completely reset marker layer and source on theater switch
+    if (markerLayer) {
+        map.removeLayer(markerLayer);
     }
 
-    // Handle click to add/remove marker
-    map.on('click', (e) => {
+    markerSource = new ol.source.Vector();
+    markerLayer = new ol.layer.Vector({ source: markerSource });
+    map.addLayer(markerLayer);
+
+    window.markerSource = markerSource;
+    window.markerLayer = markerLayer;
+
+    // 🔁 Remove any previous click handler
+    if (markerClickHandler) {
+        map.un('click', markerClickHandler);
+    }
+
+    // ✅ Define and attach a fresh handler
+    markerClickHandler = function (e) {
         const clickedFeature = map.forEachFeatureAtPixel(e.pixel, f => f, {
             layerFilter: l => l === markerLayer
         });
@@ -45,9 +51,11 @@ function initMarkerTool(map) {
 
         marker.setStyle(getMarkerStyle(marker));
         markerSource.addFeature(marker);
-    });
+    };
 
-    // UI bindings
+    map.on('click', markerClickHandler);
+
+    // 🔧 Rebind UI
     const domainSelect = document.getElementById('marker-domain');
     domainSelect?.addEventListener('change', (e) => {
         populateMarkerTypes(e.target.value);
@@ -66,6 +74,7 @@ function initMarkerTool(map) {
     updateIdentityOptions();
     updateMarkerPreview();
 }
+
 
 function populateMarkerTypes(domain) {
     const typeSelect = document.getElementById('marker-type');

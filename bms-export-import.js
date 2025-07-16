@@ -1,77 +1,6 @@
 (function () {
     const format = new ol.format.GeoJSON();
 
-    function exportLayers() {
-        const format = new ol.format.GeoJSON();
-        const allFeatures = [];
-
-        if (window.whiteboardSource) {
-            const whiteboardFeatures = window.whiteboardSource.getFeatures().map(f => {
-              const geom = f.getGeometry();
-          
-              if (geom instanceof ol.geom.Circle) {
-                const center = geom.getCenter();
-                const radius = geom.getRadius();
-          
-                const circleAsPoint = new ol.Feature({
-                  geometry: new ol.geom.Point(center)
-                });
-          
-                circleAsPoint.setProperties({
-                  __layer: 'whiteboard',
-                  originalShape: 'circle',
-                  radius
-                });
-          
-                return circleAsPoint;
-              } else {
-                // Preserve other shapes
-                f.setProperties({
-                  ...f.getProperties(),
-                  __layer: 'whiteboard'
-                });
-                return f;
-              }
-            });
-          
-            allFeatures.push(...whiteboardFeatures);
-          }        
-        
-
-        if (window.markerSource) {
-            const markerFeatures = window.markerSource.getFeatures().map(f => {
-                f.setProperties({
-                    ...f.getProperties(),
-                    __layer: 'marker',
-                    iconUrl: f.getStyle()?.getImage()?.getSrc() || ''
-                });
-                return f;
-            });
-            allFeatures.push(...markerFeatures);
-        }
-
-        // --- Extract bullseye center point only
-        if (window.currentBullseye) {
-            const centerPoint = new ol.Feature(new ol.geom.Point(window.currentBullseye));
-            centerPoint.set('__layer', 'bullseye-center');
-            allFeatures.push(centerPoint);
-        }
-
-
-        const geojson = format.writeFeaturesObject(allFeatures);
-        const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/json' });
-
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'bms-layers.json';
-        a.click();
-
-        return geojson;
-    }
-
-
-
-
     function importLayers(json) {
         const format = new ol.format.GeoJSON();
 
@@ -197,7 +126,90 @@
             reader.readAsText(file);
         });
 
-        exportButton.addEventListener('click', exportLayers);
+        //exportButton.addEventListener('click', exportLayers);
+        exportButton.addEventListener('click', () => {
+            document.getElementById('export-popup').style.display = 'block';
+        });
+        
+
+        document.getElementById('cancel-export')?.addEventListener('click', () => {
+            document.getElementById('export-popup').style.display = 'none';
+        });
+        
+        document.getElementById('confirm-export')?.addEventListener('click', () => {
+            const exportWhiteboard = document.getElementById('export-whiteboard')?.checked;
+            const exportMarkers = document.getElementById('export-markers')?.checked;
+            const exportBullseye = document.getElementById('export-bullseye')?.checked;
+        
+            const format = new ol.format.GeoJSON();
+            const allFeatures = [];
+        
+            if (exportWhiteboard && window.whiteboardSource) {
+                const whiteboardFeatures = window.whiteboardSource.getFeatures().map(f => {
+                    const geom = f.getGeometry();
+            
+                    if (geom instanceof ol.geom.Circle) {
+                        const center = geom.getCenter();
+                        const radius = geom.getRadius();
+            
+                        const circleAsPoint = new ol.Feature({
+                            geometry: new ol.geom.Point(center)
+                        });
+            
+                        circleAsPoint.setProperties({
+                            __layer: 'whiteboard',
+                            originalShape: 'circle',
+                            radius
+                        });
+            
+                        return circleAsPoint;
+                    } else {
+                        // Other geometry types
+                        f.setProperties({
+                            ...f.getProperties(),
+                            __layer: 'whiteboard'
+                        });
+                        return f;
+                    }
+                });
+            
+                allFeatures.push(...whiteboardFeatures);
+            }
+            
+        
+            if (exportMarkers && window.markerSource) {
+                const markerFeatures = window.markerSource.getFeatures().map(f => {
+                    f.setProperties({
+                        ...f.getProperties(),
+                        __layer: 'marker',
+                        iconUrl: f.get('iconUrl') || f.getStyle()?.getImage()?.getSrc() || ''
+                    });
+                    return f;
+                });
+                allFeatures.push(...markerFeatures);
+            }
+        
+            if (exportBullseye && window.currentBullseye) {
+                const bullseyePoint = new ol.Feature({
+                    geometry: new ol.geom.Point(window.currentBullseye),
+                });
+                bullseyePoint.set('__layer', 'bullseye-center');
+                allFeatures.push(bullseyePoint);
+            }
+        
+            const geojson = format.writeFeaturesObject(allFeatures);
+            const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+        
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bms-layers.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        
+            document.getElementById('export-popup').style.display = 'none';
+        });
+        
 
 
     });

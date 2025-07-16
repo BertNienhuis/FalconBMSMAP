@@ -98,6 +98,21 @@
         </fieldset>
     </div>
 
+    <!-- Export Popup -->
+    <div id="export-popup" class="export-popup hidden">
+        <div><label><input type="checkbox" id="export-whiteboard" checked> Whiteboard</label></div>
+        <div><label><input type="checkbox" id="export-markers" checked> Markers</label></div>
+        <div><label><input type="checkbox" id="export-bullseye" checked> Bullseye</label></div>
+        <div class="export-button-row">
+            <button id="confirm-export" class="button" title="Export layers">
+                <i data-lucide="upload"></i> Export
+            </button>
+            <button id="cancel-export" class="button" title="Cancel">
+                Cancel
+            </button>
+        </div>
+    </div>
+
 
 
     <!-- Scripts -->
@@ -218,7 +233,7 @@
 
             // Init tools
             addINILoaderUI(map);
-            
+
 
             const bullseyeCenter = currentSettings.center; // or any other coordinates
             drawBullseye(map, bullseyeCenter);
@@ -311,7 +326,7 @@
             if (isRulerActive) e.preventDefault();
         }, { passive: false });
 
-    
+
 
 
 
