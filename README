@@ -1,16 +1,16 @@
 TODO
+- Some tooltips are off the map
+- Show coordinates
+- No Whiteboard options like color, fill, line thickness
+- No Waypoint information (altitude )
 - No weathermap/fmap import support
 - No connectivity / share
-- No Whiteboard options like color, fill, line thickness
-- No Waypoint information (altitude, )
-- Show coordinates
-
 
 
 
 How to add <theather>_aip.json
-1. Copy data from MissionCommander (objectives + advanced options) filtered on Airports and Airstrips to notepad and save the file. 
-2. Copy data from MissionCommander (station ils) filtered on Airports and Airstrips to notepad and save the file. 
+1. Copy data (select all rows and cntr+c) from MissionCommander (objectives + advanced options) filtered on Airports and Airstrips to notepad and save the file. 
+2. Copy data (select all rows and cntr+c) from MissionCommander (station ils) filtered on Airports and Airstrips to notepad and save the file. 
 3. I use duckdb.exe to join both files based on CampID and copy the data into JSON file
 
 	copy (
@@ -45,12 +45,12 @@ How to add <theather>_aip.json
 			WHEN a.Objective LIKE '%Highway Strip%' THEN 'Highway Strip'
 			WHEN a.Objective LIKE '%Highwaystrip%' THEN 'Highway Strip'
 			ELSE 'Other'
-		  END AS ObjectiveType, UHF, VHF, GND, APP, LSO, OPS, ATIS, "ILS 1", "ILS 2", s."ILS 3", "ILS 4", X, Y, North, East 
-		  from read_csv('airports_israel.txt') a 
-		  join read_csv('station_israel.txt') s 
+		  END AS ObjectiveType, Channel, Band, UHF, VHF, GND, APP, LSO, OPS, ATIS, "ILS 1", "ILS 2", s."ILS 3", "ILS 4", X, Y, North, East 
+		  from read_csv('airports_korea.txt') a 
+		  join read_csv('station_korea.txt') s 
 		  on a.CampID = s.CampID
 	      where x <> '0.0'
-		  ) to 'aip_israel.json' (FORMAT JSON, ARRAY TRUE);
+		  ) to 'aip_korea.json' (FORMAT JSON, ARRAY TRUE);
 	  
 	  
 	  
