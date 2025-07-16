@@ -1,4 +1,5 @@
-html, body {
+html,
+body {
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', sans-serif;
@@ -7,7 +8,10 @@ html, body {
 
 #map {
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 #control-bar {
@@ -20,13 +24,13 @@ html, body {
     align-items: center;
     padding: 10px 10px 2px 10px;
     gap: 16px;
-    box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
     border-radius: 4px;
     z-index: 9999;
     font-family: 'Segoe UI', sans-serif;
 }
 
-.tool-group-header{
+.tool-group-header {
     font-size: 12px;
     font-weight: 600;
     color: rgb(32, 32, 32);
@@ -37,7 +41,7 @@ html, body {
 
 
 #mouse-position {
-    position: absolute ;
+    position: absolute;
     top: 10px;
     bottom: auto !important;
     left: auto !important;
@@ -63,8 +67,8 @@ html, body {
     justify-content: center;
     cursor: pointer;
     transition: background 0.2s, border-color 0.2s;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    margin-bottom: 8px;  
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    margin-bottom: 8px;
 }
 
 .button svg {
@@ -133,7 +137,7 @@ canvas {
     top: 10px;
     left: 174px;
     background: #ffffffa3;
-    box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
     border: 1px solid #ccc;
     padding: 10px;
     z-index: 1000;
@@ -142,41 +146,66 @@ canvas {
     flex-direction: column;
     gap: 10px;
     width: 190px;
-  }
+}
 
-  .hidden {
+.hidden {
     display: none;
 }
 
-  
-  /* Each row with label + select */
-  .marker-row {
+
+/* Each row with label + select */
+.marker-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-  }
-  
-  /* Uniform label width */
-  .marker-row label {
+}
+
+/* Uniform label width */
+.marker-row label {
     width: 70px;
-  }
-  
-  /* Select box styling */
-  .marker-row select {
+}
+
+/* Select box styling */
+.marker-row select {
     flex: 1;
     max-width: 150px;
-  }
-  
-  /* Identity fieldset */
-  #marker-identity-options {
+}
+
+/* Identity fieldset */
+#marker-identity-options {
     margin-top: 10px;
     border: 1px solid #ccc;
     padding: 8px;
-  }
-  
-  /* Identity legend */
-  #marker-identity-options legend {
+}
+
+/* Identity legend */
+#marker-identity-options legend {
     font-weight: bold;
-  }
-  
- 
+}
+
+
+
+.export-popup {
+    display: none;
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 16px;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+.export-button-row {
+    display: flex;
+    align-items: center;
+    align-content: start;
+    gap: 4px;
+    margin-top: 8px;
+
+    .button {
+        margin-bottom: 0px;
+    }
+}
