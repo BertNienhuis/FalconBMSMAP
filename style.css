@@ -148,7 +148,9 @@ canvas {
     width: 190px;
 }
 
- 
+.hidden {
+    display: none !important;
+}
 
 
 /* Each row with label + select */
@@ -212,6 +214,3 @@ canvas {
     }
 }
 
-.hidden {
-    display: none !important;
-}

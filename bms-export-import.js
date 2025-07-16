@@ -128,12 +128,12 @@
 
         //exportButton.addEventListener('click', exportLayers);
         exportButton.addEventListener('click', () => {
-            document.getElementById('export-popup').style.display = 'block';
+            document.getElementById('export-popup').classList.remove('hidden');
         });
         
 
         document.getElementById('cancel-export')?.addEventListener('click', () => {
-            document.getElementById('export-popup').style.display = 'none';
+            document.getElementById('export-popup').classList.add('hidden');
         });
         
         document.getElementById('confirm-export')?.addEventListener('click', () => {
