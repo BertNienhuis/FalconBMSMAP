@@ -12,6 +12,8 @@ function drawBullseye(map, centerCoord) {
     map.removeLayer(bullseyeLayer);
   }
 
+  window.currentBullseye = centerCoord;
+
   bullseyeRings = [];
   bullseyeRadials = [];
 
@@ -55,6 +57,8 @@ function drawBullseye(map, centerCoord) {
     bullseyeRadials.push(feature);
   }
 
+  window.bullseyeLayer = bullseyeLayer;
+
   bullseyeFeature = new ol.Feature(new ol.geom.Point(centerCoord));
   source.addFeature(bullseyeFeature);
 }
@@ -62,6 +66,7 @@ function drawBullseye(map, centerCoord) {
 
 function liveUpdateBullseye() {
   const center = bullseyeFeature.getGeometry().getCoordinates();
+  window.currentBullseye = center;
   updateBullseyeGeometry(center);
 }
 
@@ -171,6 +176,25 @@ function handleBullseyeDrag() {
   if (!bullseyeFeature) return;
   requestAnimationFrame(() => {
     const center = bullseyeFeature.getGeometry().getCoordinates();
+    window.currentBullseye = center; 
     updateBullseyeGeometry(center, false);
   });
 }
+
+//For export/import purposes
+window.setBullseyeCenter = function (coords) {
+    if (!coords) return;
+
+    window.currentBullseye = coords;
+
+    // ✅ Move the center point feature
+    if (window.bullseyeFeature && window.bullseyeFeature.getGeometry()) {
+        window.bullseyeFeature.getGeometry().setCoordinates(coords);
+    }
+
+    // ✅ Redraw rings/radials
+    if (typeof updateBullseyeGeometry === 'function') {
+        updateBullseyeGeometry(coords, true);
+    }
+};
+

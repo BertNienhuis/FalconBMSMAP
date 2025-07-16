@@ -35,10 +35,13 @@
 
         <div class="tool-group">
             <label for="ini-loader" class="button file-upload-label" title="Load mission">
-                <i data-lucide="folder-open"></i> Open
+                <i data-lucide="folder-open"></i> Open mission
             </label>
             <input type="file" id="ini-loader" accept=".ini">
             <button id="clear-button" class="button" title="Clear mission"><i data-lucide="trash-2"></i> Clear</button>
+        </div>
+
+        <div class="tool-group">
             <button id="ruler-button" class="button" title="Measure distance (L)"><i data-lucide="ruler"></i>
                 Ruler</button>
             <button id="marker-button" class="button" title="Add marker"><i data-lucide="map-pin"></i> Marker</button>
@@ -47,6 +50,7 @@
         </div>
 
         <div class="tool-group">
+            <div class="tool-group-header">Whiteboard</div>
             <button id="whiteboard-pencil" class="button" title="Free draw (Q)"><i data-lucide="pencil"></i> Pencil
                 (q)</button>
             <button id="whiteboard-polygon" class="button" title="Polygon (W)"><i data-lucide="triangle"></i> Polygon
@@ -55,14 +59,21 @@
                 (e)</button>
             <button id="whiteboard-rect" class="button" title="Rectangle (R)"><i data-lucide="square"></i> Rectangle
                 (r)</button>
-        </div>
-
-        <div class="tool-group">
             <button id="whiteboard-undo" class="button" title="Undo (Z)"><i data-lucide="undo-2"></i> Undo</button>
             <button id="whiteboard-redo" class="button" title="Redo (Y)"><i data-lucide="redo-2"></i> Redo</button>
             <button id="whiteboard-eraser" class="button" title="Clear whiteboard"><i data-lucide="eraser"></i>
                 Clean</button>
         </div>
+        <div class="tool-group">
+            <label class="button" title="Import layers">
+                <i data-lucide="download"></i> Import layers
+                <input type="file" id="import-layers" accept=".json" style="display: none;">
+            </label>
+            <button id="export-layers" class="button" title="Export layers">
+                <i data-lucide="upload"></i> Export layers
+            </button>
+        </div>
+
     </div>
 
     <!-- Marker Popup -->
@@ -96,6 +107,7 @@
     <script src="bms-whiteboard.js"></script>
     <script src="bms-marker-layer.js"></script>
     <script src="bms-bullseye.js"></script>
+    <script src="bms-export-import.js"></script>
 
 
     <script>
@@ -298,6 +310,10 @@
         document.addEventListener('touchmove', e => {
             if (isRulerActive) e.preventDefault();
         }, { passive: false });
+
+    
+
+
 
     </script>
 </body>
