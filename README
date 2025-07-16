@@ -1,10 +1,9 @@
 TODO
 - No weathermap/fmap import support
 - No connectivity / share
-- No Export/Import/Save
 - No Whiteboard options like color, fill, line thickness
-- No Airport info
 - No Waypoint information (altitude, )
+- Show coordinates
 
 
 
@@ -15,7 +14,7 @@ How to add <theather>_aip.json
 3. I use duckdb.exe to join both files based on CampID and copy the data into JSON file
 
 	copy (
-		select a.Objective, 
+		select 
 		regexp_extract(a.Objective, '(([A-Z]{4}))', 1) AS ICAN,
 		TRIM(
 			REGEXP_REPLACE(
@@ -25,7 +24,7 @@ How to add <theather>_aip.json
 					REGEXP_REPLACE(
 					  REGEXP_REPLACE(
 						a.Objective,
-						'(([A-Z]{1000}))', '', 'gi'  -- remove (ABCD)
+						'\(([A-Z]{4})\)', '', 'gi'  -- remove (ABCD)
 					  ),
 					  'Airbase', '', 'gi'
 					),
@@ -37,7 +36,7 @@ How to add <theather>_aip.json
 			  ),
 			  'Highwaystrip', '', 'gi'
 			)
-		  ) AS CleanObjective,
+		  ) AS Objective,
 		CASE
 			WHEN a.Objective LIKE '%Airbase%' THEN 'Airbase'
 			WHEN a.Objective LIKE '%Airstrip%' THEN 'Airstrip'
@@ -46,41 +45,12 @@ How to add <theather>_aip.json
 			WHEN a.Objective LIKE '%Highway Strip%' THEN 'Highway Strip'
 			WHEN a.Objective LIKE '%Highwaystrip%' THEN 'Highway Strip'
 			ELSE 'Other'
-		  END AS ObjectiveType, GND, APP, LSO, OPS, ATIS, "ILS 1", "ILS 2", s."ILS 3", "ILS 4", X, Y, North, East 
-		  from read_csv('airports_korea.txt') a 
-		  join read_csv('station_korea.txt') s 
-		  on a.CampID = s.CampID
-	      where x <> '0.0'
-		  ) to 'korea_aip.json' (FORMAT JSON, ARRAY TRUE);
-	  
-	  
-	  	copy (
-		select a.Objective, CASE
-			WHEN a.Objective LIKE '%Airbase%' THEN 'Airbase'
-			WHEN a.Objective LIKE '%Airstrip%' THEN 'Airstrip'
-			WHEN a.Objective LIKE '%Airport%' THEN 'Airport'
-			WHEN a.Objective LIKE '% AB %' THEN 'Airbase'
-			WHEN a.Objective LIKE '%Highway Strip%' THEN 'Highway Strip'
-			WHEN a.Objective LIKE '%Highwaystrip%' THEN 'Highway Strip'
-			ELSE 'Other'
-		  END AS ObjectiveType, GND, APP, LSO, OPS, ATIS, "ILS 1", "ILS 2", s."ILS 3", "ILS 4", X, Y, North, East 
-		  from read_csv('airports_korea.txt') a 
-		  join read_csv('station_korea.txt') s 
-		  on a.CampID = s.CampID
-	      where x <> '0.0')
-	  to 'korea_aip.json' (FORMAT JSON, ARRAY TRUE);
-	  
-	  
-	  select a.Objective, CASE
-			WHEN a.Objective LIKE '%Airbase%' THEN 'Airbase'
-			WHEN a.Objective LIKE '%Airstrip%' THEN 'Airstrip'
-			WHEN a.Objective LIKE '%Airport%' THEN 'Airport'
-			WHEN a.Objective LIKE '% AB %' THEN 'Airbase'
-			WHEN a.Objective LIKE '%Highway Strip%' THEN 'Highway Strip'
-			WHEN a.Objective LIKE '%Highwaystrip%' THEN 'Highway Strip'
-			ELSE 'Other'
-		  END AS ObjectiveType, GND, APP, LSO, OPS, ATIS, "ILS 1", "ILS 2", s."ILS 3", "ILS 4", X, Y, North, East 
+		  END AS ObjectiveType, UHF, VHF, GND, APP, LSO, OPS, ATIS, "ILS 1", "ILS 2", s."ILS 3", "ILS 4", X, Y, North, East 
 		  from read_csv('airports_israel.txt') a 
 		  join read_csv('station_israel.txt') s 
 		  on a.CampID = s.CampID
 	      where x <> '0.0'
+		  ) to 'aip_israel.json' (FORMAT JSON, ARRAY TRUE);
+	  
+	  
+	  

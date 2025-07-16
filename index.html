@@ -234,6 +234,13 @@
 
             dragPanInteraction = map.getInteractions().getArray().find(i => i instanceof ol.interaction.DragPan);
 
+            // Remove rotation
+            map.getInteractions().forEach(interaction => {
+                if (interaction instanceof ol.interaction.PinchRotate || interaction instanceof ol.interaction.DragRotate) {
+                    map.removeInteraction(interaction);
+                }
+            });
+
             // Init tools
             addINILoaderUI(map);
             if (currentSettings.aip) {
