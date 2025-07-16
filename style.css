@@ -136,8 +136,8 @@ canvas {
     position: absolute;
     top: 10px;
     left: 174px;
-    background: #ffffffa3;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+    background: #ffffffee;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
     border: 1px solid #ccc;
     padding: 10px;
     z-index: 1000;
@@ -190,7 +190,7 @@ canvas {
     position: absolute;
     top: 575px;
     left: 174px;
-    background: #ffffffa3;
+    background: #ffffffee;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
     border: 1px solid #ccc;
     padding: 10px;
