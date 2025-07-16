@@ -7,11 +7,36 @@
 
         if (window.whiteboardSource) {
             const whiteboardFeatures = window.whiteboardSource.getFeatures().map(f => {
-                f.setProperties({ ...f.getProperties(), __layer: 'whiteboard' });
+              const geom = f.getGeometry();
+          
+              if (geom instanceof ol.geom.Circle) {
+                const center = geom.getCenter();
+                const radius = geom.getRadius();
+          
+                const circleAsPoint = new ol.Feature({
+                  geometry: new ol.geom.Point(center)
+                });
+          
+                circleAsPoint.setProperties({
+                  __layer: 'whiteboard',
+                  originalShape: 'circle',
+                  radius
+                });
+          
+                return circleAsPoint;
+              } else {
+                // Preserve other shapes
+                f.setProperties({
+                  ...f.getProperties(),
+                  __layer: 'whiteboard'
+                });
                 return f;
+              }
             });
+          
             allFeatures.push(...whiteboardFeatures);
-        }
+          }        
+        
 
         if (window.markerSource) {
             const markerFeatures = window.markerSource.getFeatures().map(f => {
@@ -93,6 +118,24 @@
 
             switch (layerTag) {
                 case 'whiteboard':
+                    const shape = f.get('originalShape');
+
+                    if (shape === 'circle' && f.getGeometry() instanceof ol.geom.Point) {
+                        const center = f.getGeometry().getCoordinates();
+                        const radius = f.get('radius');
+
+                        if (!isNaN(radius)) {
+                        const circle = new ol.geom.Circle(center, radius);
+                        const circleFeature = new ol.Feature(circle);
+
+                        circleFeature.setProperties(f.getProperties());
+                        circleFeature.setGeometry(circle);
+                        window.whiteboardSource?.addFeature(circleFeature);
+                        break;
+                        }
+                    }
+
+                    // Default fallback for non-circle whiteboard shapes
                     window.whiteboardSource?.addFeature(f);
                     break;
 

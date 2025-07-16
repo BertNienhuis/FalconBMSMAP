@@ -3,13 +3,17 @@ let markerSource = null;
 let isMarkerMode = false;
 
 function initMarkerTool(map) {
-    // Create vector source + layer
-    markerSource = new ol.source.Vector();
-    markerLayer = new ol.layer.Vector({ source: markerSource });
-    map.addLayer(markerLayer);
-
-  
-
+    // Use existing globals from import or create fresh ones
+    if (window.markerSource && window.markerLayer) {
+        markerSource = window.markerSource;
+        markerLayer = window.markerLayer;
+    } else {
+        markerSource = new ol.source.Vector();
+        markerLayer = new ol.layer.Vector({ source: markerSource });
+        map.addLayer(markerLayer);
+        window.markerSource = markerSource;
+        window.markerLayer = markerLayer;
+    }
 
     // Handle click to add/remove marker
     map.on('click', (e) => {
@@ -17,14 +21,11 @@ function initMarkerTool(map) {
             layerFilter: l => l === markerLayer
         });
 
-        if (clickedFeature) {
+        if (clickedFeature && markerSource.hasFeature(clickedFeature) && isMarkerMode) {
             markerSource.removeFeature(clickedFeature);
             return;
         }
 
-        if (!isMarkerMode) return;
-
-        // Only add marker if mode is enabled
         if (!isMarkerMode) return;
 
         const identity = document.querySelector('input[name="marker-identity"]:checked')?.value;
@@ -42,43 +43,24 @@ function initMarkerTool(map) {
             iconUrl: imageUrl
         });
 
-        if (!window.markerLayer) {
-            window.markerSource = new ol.source.Vector();
-            window.markerLayer = new ol.layer.Vector({ source: window.markerSource });
-            map.addLayer(window.markerLayer);
-        }
-    
-        markerSource = window.markerSource;
-        markerLayer = window.markerLayer;
-
         marker.setStyle(getMarkerStyle(marker));
         markerSource.addFeature(marker);
     });
 
-
-
-    // Populate dropdowns and hook up preview update
+    // UI bindings
     const domainSelect = document.getElementById('marker-domain');
     domainSelect?.addEventListener('change', (e) => {
         populateMarkerTypes(e.target.value);
-        updateIdentityOptions(); // <- fix!
-        updateMarkerPreview();
-    });
-
-
-    const typeSelect = document.getElementById('marker-type');
-    typeSelect?.addEventListener('change', updateMarkerPreview);
-
-
-
-    document.getElementById('marker-type')?.addEventListener('change', () => {
         updateIdentityOptions();
         updateMarkerPreview();
     });
 
+    const typeSelect = document.getElementById('marker-type');
+    typeSelect?.addEventListener('change', () => {
+        updateIdentityOptions();
+        updateMarkerPreview();
+    });
 
-
-    // Initial population
     populateMarkerTypes(domainSelect?.value || 'land');
     updateMarkerPreview();
     updateIdentityOptions();

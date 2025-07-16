@@ -26,7 +26,14 @@ html, body {
     font-family: 'Segoe UI', sans-serif;
 }
 
-
+.tool-group-header{
+    font-size: 12px;
+    font-weight: 600;
+    color: rgb(32, 32, 32);
+    text-align: center;
+    align-items: center;
+    margin-bottom: 8px;
+}
 
 
 #mouse-position {
@@ -172,3 +179,4 @@ canvas {
     font-weight: bold;
   }
   
+ 
