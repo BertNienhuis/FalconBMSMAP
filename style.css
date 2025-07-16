@@ -144,9 +144,7 @@ canvas {
     width: 190px;
   }
 
-  .hidden {
-    display: none;
-}
+ 
 
   
   /* Each row with label + select */
@@ -179,4 +177,6 @@ canvas {
     font-weight: bold;
   }
   
- 
+  .hidden {
+    display: none !important;
+}
