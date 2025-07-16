@@ -34,6 +34,8 @@ function loadAirportIcons(url, map) {
                     name: airport.Objective || 'Unknown',
                     icao: airport.ICAN || airport.ID || '',
                     type: airport.ObjectiveType || '',
+                    channel: airport.Channel || '',
+                    band: airport.Band || '',
                     freqs: {
                         uhf: airport.UHF || 'N/A',
                         vhf: airport.VHF || 'N/A',
@@ -100,12 +102,15 @@ function createAirportTooltip(map, airportLayer) {
                 const name = feature.get('name');
                 const icao = feature.get('icao');
                 const type = feature.get('type');
+                const channel = feature.get('channel');
+                const band = feature.get('band');
                 const freqs = feature.get('freqs') || {};
                 const ils = feature.get('ils') || [];
 
                 container.innerHTML = `
                     <strong>${name}${icao ? ` (${icao})` : ''}</strong><br>
                     <em>${type}</em><br><br>
+                    <strong>Tacan:</strong>${channel} ${band}<br><br>
                     <strong>Frequencies:</strong><br>
                     Ground: ${freqs.ground}<br>
                     Tower UHF: ${freqs.uhf} <br>
