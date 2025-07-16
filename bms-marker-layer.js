@@ -122,6 +122,8 @@ function updateIdentityOptions() {
     const container = document.getElementById('marker-identity-options');
     if (!container || !domain || !type) return;
 
+    const currentSelected = document.querySelector('input[name="marker-identity"]:checked')?.value;
+
     const identities = ['friend', 'hostile', 'neutral', 'unknown'];
     const sanitizedType = type.toLowerCase().replace(/\s+/g, '_');
 
@@ -141,6 +143,10 @@ function updateIdentityOptions() {
         input.name = 'marker-identity';
         input.value = identity;
 
+        if (identity === currentSelected) {
+            input.checked = true;
+        }
+
         const img = document.createElement('img');
         img.src = imageUrl;
         img.alt = identity;
@@ -154,15 +160,16 @@ function updateIdentityOptions() {
         container.appendChild(label);
     });
 
-    // Automatically select first option and attach preview update
-    const firstRadio = container.querySelector('input[type="radio"]');
-    if (firstRadio) {
-        firstRadio.checked = true;
+    const selectedRadio = container.querySelector('input[name="marker-identity"]:checked');
+    if (!selectedRadio && container.querySelector('input[name="marker-identity"][value="hostile"]')) {
+        container.querySelector('input[name="marker-identity"][value="hostile"]').checked = true;
     }
 
     container.querySelectorAll('input[name="marker-identity"]').forEach(radio => {
         radio.addEventListener('change', updateMarkerPreview);
     });
+
+    updateMarkerPreview();
 }
 
 function getMarkerStyle(feature) {
