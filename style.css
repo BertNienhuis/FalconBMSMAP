@@ -55,6 +55,10 @@ body {
     display: none;
 }
 
+.file-upload-label input[type="file"] {
+    display: none;
+}
+
 /* Shared button-like styles */
 .button {
     width: 130px;

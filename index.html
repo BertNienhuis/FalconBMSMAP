@@ -34,10 +34,11 @@
         </div>
 
         <div class="tool-group">
-            <label for="ini-loader" class="button file-upload-label" title="Load mission">
+            <label class="button file-upload-label" title="Open mission">
                 <i data-lucide="folder-open"></i> Open mission
+                <input type="file" id="ini-loader"  style="display: none;">
             </label>
-            <input type="file" id="ini-loader" accept=".ini">
+            
             <button id="clear-button" class="button" title="Clear mission"><i data-lucide="trash-2"></i> Clear</button>
         </div>
 
@@ -69,7 +70,7 @@
             <label class="button" title="Import layers">
                 <i data-lucide="download"></i> Import layers
                 <input type="file" id="import-layers" accept=".json" style="display: none;">
-            </label>
+            </label>            
             <button id="export-layers" class="button" title="Export layers">
                 <i data-lucide="upload"></i> Export layers
             </button>
