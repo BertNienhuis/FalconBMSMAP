@@ -185,17 +185,21 @@ canvas {
 
 
 
+/* Marker Popup Container */
 .export-popup {
-    display: none;
-    position: fixed;
-    top: 20%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: white;
-    padding: 16px;
+    position: absolute;
+    top: 575px;
+    left: 174px;
+    background: #ffffffa3;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
     border: 1px solid #ccc;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 10px;
     z-index: 1000;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 190px;
 }
 
 .export-button-row {
