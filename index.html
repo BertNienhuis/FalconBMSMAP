@@ -175,8 +175,8 @@
 
         function getTheaterSettings(theater) {
             const settings = {
-                Korea: { size: 16384, center: [8192, 8192], zoom: 2, scale: 0.004876 },
-                Israel: { size: 8192, center: [4096, 4096], zoom: 2, scale: 0.002438 },
+                Korea: { size: 16384, center: [8192, 8192], zoom: 2, scale: 0.004876, aip: 'aip_korea.json'   },
+                Israel: { size: 8192, center: [4096, 4096], zoom: 2, scale: 0.002438, aip: 'aip_israel.json'},
                 Balkans: { size: 8192, center: [4096, 4096], zoom: 2, scale: 0.002438 }
             };
             return settings[theater] || settings.Korea;
@@ -235,7 +235,9 @@
 
             // Init tools
             addINILoaderUI(map);
-
+            if (currentSettings.aip) {
+                loadAirportIcons(`${theater}/${currentSettings.aip}`, map);
+            }
 
             const bullseyeCenter = currentSettings.center; // or any other coordinates
             drawBullseye(map, bullseyeCenter);
