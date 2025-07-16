@@ -151,7 +151,7 @@ function drawRouteOnMap(map, data) {
     marker.setStyle(new ol.style.Style({
         image: shapeStyle,
         text: new ol.style.Text({
-            text: `${i }`,
+            text: `${i + 1}`,
             offsetY: -15,
             font: 'bold 16px sans-serif',
             fill: new ol.style.Fill({ color: '#fff' }),
