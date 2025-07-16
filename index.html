@@ -31,8 +31,9 @@
                     <option value="Balkans">Balkans</option>
                 </select>
             </label>
+            <input id="airport-search" type="text" placeholder="Search airports..." />
+            <ul id="airport-search-results" class="hidden"></ul>
         </div>
-
         <div class="tool-group">
             <label class="button file-upload-label" title="Open mission">
                 <i data-lucide="folder-open"></i> Open mission
@@ -102,7 +103,7 @@
 
     <!-- Export Popup -->
     <div id="export-popup" class="export-popup hidden">
-        <strong>Select layers to export</strong>
+        <div class="tool-group-header">Select layers to export</div>
         <div><label><input type="checkbox" id="export-whiteboard" checked> Whiteboard</label></div>
         <div><label><input type="checkbox" id="export-markers" checked> Markers</label></div>
         <div><label><input type="checkbox" id="export-bullseye" checked> Bullseye</label></div>
