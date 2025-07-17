@@ -1,9 +1,13 @@
 TODO
 - Show coordinates
+- Toggle labels, airports, bullseye, marker layer
+- Extend airbases with country, add to search a list grouped by country
+- Add runway info, elevation, Lat Long
 - No Whiteboard options like color, fill, line thickness
-- No Waypoint information (altitude )
+- Add extra waypoint information (altitude, etc. )
 - No weathermap/fmap import support
-- No connectivity / share
+- No live connectivity/ collaborate (only import/export)
+
 
 
 
