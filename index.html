@@ -20,6 +20,8 @@
     <div id="map" class="map"></div>
     <div id="mouse-position"></div>
 
+
+
     <!-- Control Bar -->
     <div id="control-bar">
         <div class="tool-group">
@@ -37,9 +39,9 @@
         <div class="tool-group">
             <label class="button file-upload-label" title="Open mission">
                 <i data-lucide="folder-open"></i> Open mission
-                <input type="file" id="ini-loader"  style="display: none;">
+                <input type="file" id="ini-loader" style="display: none;">
             </label>
-            
+
             <button id="clear-button" class="button" title="Clear mission"><i data-lucide="trash-2"></i> Clear</button>
         </div>
 
@@ -71,13 +73,17 @@
             <label class="button" title="Import layers">
                 <i data-lucide="download"></i> Import layers
                 <input type="file" id="import-layers" accept=".json" style="display: none;">
-            </label>            
+            </label>
             <button id="export-layers" class="button" title="Export layers">
                 <i data-lucide="upload"></i> Export layers
             </button>
         </div>
 
     </div>
+    <!-- Toggle control bar -->
+    <button id="control-toggle" title="Collapse panel">
+        <i id="control-toggle-icon" data-lucide="arrow-left-from-line"></i>
+    </button>
 
     <!-- Marker Popup -->
     <div id="marker-popup" class="marker-popup hidden">
@@ -177,8 +183,8 @@
 
         function getTheaterSettings(theater) {
             const settings = {
-                Korea: { size: 16384, center: [8192, 8192], zoom: 2, scale: 0.004876, aip: 'aip_korea.json'   },
-                Israel: { size: 8192, center: [4096, 4096], zoom: 2, scale: 0.002438, aip: 'aip_israel.json'},
+                Korea: { size: 16384, center: [8192, 8192], zoom: 2, scale: 0.004876, aip: 'aip_korea.json' },
+                Israel: { size: 8192, center: [4096, 4096], zoom: 2, scale: 0.002438, aip: 'aip_israel.json' },
                 Balkans: { size: 8192, center: [4096, 4096], zoom: 2, scale: 0.002438 }
             };
             return settings[theater] || settings.Korea;
@@ -340,7 +346,15 @@
             if (isRulerActive) e.preventDefault();
         }, { passive: false });
 
+        //Toggle control panel
+        document.getElementById('control-toggle').addEventListener('click', () => {
+            const controlBar = document.getElementById('control-bar');
+            const icon = document.getElementById('control-toggle-icon');
 
+            const isCollapsed = controlBar.classList.toggle('collapsed');
+            icon.setAttribute('data-lucide', isCollapsed ? 'arrow-right-from-line' : 'arrow-left-from-line');
+            lucide.createIcons();
+        });
 
 
 

@@ -14,10 +14,12 @@ body {
     bottom: 0;
 }
 
+
+
 #control-bar {
     position: absolute;
+    left: 0;
     top: 10px;
-    left: 0px;
     background: #fdfdfd;
     display: flex;
     flex-direction: column;
@@ -26,9 +28,47 @@ body {
     gap: 16px;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
     border-radius: 0px 4px 4px 0px;
-    z-index: 9999;
-    font-family: 'Segoe UI', sans-serif;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    width: 140px;
+    /* Needed for positioning */
 }
+
+/* Slide panel left by its full width when collapsed */
+#control-bar.collapsed {
+    transform: translateX(-220px);
+    /* width - toggle button width */
+}
+
+#control-toggle {
+    position: absolute;
+    top: 17px;
+    left: 160px;
+    background: #fdfdfd;
+    border: none;
+    padding: 4px;
+    border-radius: 0px 4px 4px 0px;
+    cursor: pointer;
+    font-weight: bold;
+    z-index: 1001;
+    transition: transform 0.3s ease;
+    display: flex;
+    align-items: center;
+    color: #767575;
+}
+
+
+/* When collapsed, move toggle button left too */
+#control-bar.collapsed{
+    left: 0px !important;
+}
+
+/* Move toggle with panel when collapsed */
+#control-bar.collapsed+#control-toggle {
+    transform: translateX(-160px);
+}
+
 
 .tool-group-header {
     font-size: 12px;
@@ -61,7 +101,7 @@ body {
 
 /* Shared button-like styles */
 .button {
-    width: 130px;
+    width: 136px;
     height: 25px;
     border: 1px solid #ccc;
     border-radius: 6px;
@@ -82,7 +122,8 @@ body {
 
 /* Fix iOS styling leak for file inputs inside labels */
 .button input[type="file"] {
-    display: none; /* fully hide input */
+    display: none;
+    /* fully hide input */
     font-size: inherit;
     font-family: inherit;
     color: inherit;
@@ -256,8 +297,8 @@ canvas {
     gap: 2px 10px;
     font-size: 13px;
     margin: 6px 0 10px;
-  }
-  
+}
+
 
 #airport-search {
     width: 120px;
@@ -292,4 +333,3 @@ canvas {
 .hidden {
     display: none;
 }
-
