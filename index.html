@@ -354,6 +354,11 @@
             const isCollapsed = controlBar.classList.toggle('collapsed');
             icon.setAttribute('data-lucide', isCollapsed ? 'arrow-right-from-line' : 'arrow-left-from-line');
             lucide.createIcons();
+
+             // Cancel all active modes if collapsing
+            if (isCollapsed) {
+                deactivateAllTools();
+            }
         });
 
 
