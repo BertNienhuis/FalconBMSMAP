@@ -1,5 +1,6 @@
 TODO
 - Show coordinates
+- Change airport label below the icon
 - Toggle labels, airports, bullseye, marker layer
 - Extend airbases with country, add to search a list grouped by country
 - Add runway info, elevation, Lat Long
