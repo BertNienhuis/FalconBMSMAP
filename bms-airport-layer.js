@@ -64,7 +64,7 @@ function loadAirportIcons(url, map) {
                             font: '12px sans-serif',
                             fill: new ol.style.Fill({ color: 'black' }),
                             stroke: new ol.style.Stroke({ color: 'white', width: 2 }),
-                            offsetY: -15
+                            offsetY: 15
                         })
                     })
                 ]);
