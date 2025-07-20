@@ -249,11 +249,13 @@
                 }
             });
 
-            // Init tools
-            addINILoaderUI(map);
+           
             if (currentSettings.aip) {
                 loadAirportIcons(`${theater}/${currentSettings.aip}`, map);
             }
+            
+            // Init tools
+            addINILoaderUI(map);
 
             const bullseyeCenter = currentSettings.center; // or any other coordinates
             drawBullseye(map, bullseyeCenter);
