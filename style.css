@@ -198,16 +198,11 @@ body {
     .whiteboard-style-group {
         padding: 4px;
     }
+}
 
-    #control-toggle {
-        top: -14px;
-        right: -14px;
-    }
-
-    #control-toggle-open {
-        top: 12px;
-        left: 12px;
-    }
+#control-bar .tool-group:first-child select,
+#control-bar .tool-group:first-child input {
+    max-width: 100%;
 }
 
 
@@ -549,6 +544,7 @@ body {
 .glass-select {
     display: block;
     width: 100%;
+    box-sizing: border-box;
     padding: 6px 32px 6px 10px;
     font-size: 12px;
     border-radius: 8px;
@@ -865,4 +861,17 @@ canvas {
 
 .hidden {
     display: none;
+}
+.map-select {
+    width: 136px;
+}
+
+#airport-search {
+    width: 136px !important;
+    box-sizing: border-box;
+}
+
+#control-wrapper .map-select,
+#control-wrapper #airport-search {
+    max-width: 100%;
 }
