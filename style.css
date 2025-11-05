@@ -37,7 +37,7 @@ body {
     flex-direction: column;
     align-items: center;
     padding: 10px 10px 8px 10px;
-    gap: 16px;
+    gap: 12px;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
@@ -138,17 +138,19 @@ body {
     z-index: 950;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.85), rgba(248, 250, 252, 0.55));
-    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 12px;
-    padding: 12px 16px;
-    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.2);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    gap: 16px;
+    padding: 10px 12px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    gap: 12px;
     max-width: calc(100vw - 48px);
     flex-wrap: nowrap;
+
 }
+
 
 #whiteboard-toolbar.hidden {
     display: none;
@@ -795,8 +797,8 @@ canvas {
     left: 0;
     background: rgba(255, 255, 255, 0.3);
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.35);
     padding: 10px;
     z-index: 1000;
@@ -853,8 +855,8 @@ canvas {
     left: 0;
     background: rgba(255, 255, 255, 0.3);
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.35);
     padding: 10px;
     z-index: 1000;
@@ -889,14 +891,14 @@ canvas {
 
 .airport-card {
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.65));
-    border: 1px solid rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
     border-radius: 12px;
     padding: 14px 16px;
     min-width: 220px;
     max-width: 320px;
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     color: #0f172a;
     line-height: 1.45;
 }
@@ -1007,7 +1009,7 @@ canvas {
     border-radius: 8px;
     font-size: 13px;
     color: #0f172a;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.3));
+    background: linear-gradient(145deg, rgb(255, 255, 255), rgba(255, 255, 255, 1));
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -1062,3 +1064,5 @@ canvas {
 #control-wrapper #airport-search {
     max-width: 100%;
 }
+
+
