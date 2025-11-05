@@ -45,7 +45,7 @@ body {
     border-radius: 12px;
     overflow-y: auto;
     overflow-x: hidden;
-    width: 140px;
+    width: 140px; min-width: 140px; max-width: 140px;
     max-height: 100%;
 }
 
@@ -148,7 +148,7 @@ body {
     gap: 12px;
     max-width: calc(100vw - 48px);
     flex-wrap: nowrap;
-
+    width: 640px;
 }
 
 
@@ -166,162 +166,9 @@ body {
 }
 
 
-@media (max-width: 1024px) {
-    #control-wrapper {
-        top: 16px;
-        left: 16px;
-        max-height: calc(100vh - 32px);
-    }
 
-    #control-bar {
-        width: min(240px, calc(100vw - 32px));
-        padding: 12px;
-        gap: 12px;
-    }
 
-    .button,
-    .whiteboard-button,
-    .map-select,
-    #airport-search,
-    .file-upload-label,
-    .glass-select,
-    .marker-select {
-        width: 100%;
-    }
 
-    #whiteboard-toolbar {
-        top: 68px;
-        flex-wrap: wrap;
-        max-width: calc(100vw - 32px);
-    }
-
-    .whiteboard-toolset {
-        flex-direction: column;
-        gap: 10px;
-        width: 100%;
-        align-items: stretch;
-    }
-
-    .whiteboard-toolbar-row {
-        flex-direction: column;
-        gap: 8px;
-        align-items: stretch;
-    }
-
-    .whiteboard-button-groups {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .whiteboard-color-group {
-        justify-content: center;
-    }
-
-    .whiteboard-draw-group,
-    .whiteboard-edit-group {
-        justify-content: center;
-    }
-
-    .whiteboard-button {
-        width: 100%;
-        min-width: 0;
-    }
-
-    .whiteboard-style-group {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .whiteboard-style-grid {
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-
-    .whiteboard-style-grid--sliders {
-        justify-content: center;
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .whiteboard-style-grid--sliders .whiteboard-style-control {
-        align-items: stretch;
-        text-align: left;
-    }
-
-    .whiteboard-style-control select {
-        width: 100%;
-        min-width: 0;
-    }
-
-    #control-toggle {
-        top: -16px;
-        right: -16px;
-    }
-
-    #control-toggle-open {
-        top: 16px;
-        left: 16px;
-    }
-}
-
-@media (max-width: 640px) {
-    #control-wrapper {
-        top: 12px;
-        left: 12px;
-    }
-
-    #control-bar {
-        width: min(220px, calc(100vw - 24px));
-        padding: 10px;
-        gap: 10px;
-    }
-
-    #whiteboard-toolbar {
-        top: 60px;
-        padding: 10px 12px;
-        flex-direction: column;
-        gap: 12px;
-        align-items: stretch;
-    }
-
-    .whiteboard-toolset {
-        width: 100%;
-        align-items: stretch;
-        gap: 8px;
-    }
-
-    .whiteboard-button {
-        padding: 6px 4px;
-        width: 100%;
-        min-width: 0;
-    }
-
-    .whiteboard-style-group {
-        padding: 6px;
-        width: 100%;
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .whiteboard-style-grid {
-        width: 100%;
-    }
-
-    .whiteboard-style-grid--sliders {
-        width: 100%;
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .whiteboard-style-grid--sliders .whiteboard-style-control {
-        align-items: stretch;
-        text-align: left;
-    }
-
-    .whiteboard-style-control input[type="range"] {
-        width: 100%;
-    }
-}
 
 #control-bar .tool-group:first-child select,
 #control-bar .tool-group:first-child input {
@@ -1064,5 +911,26 @@ canvas {
 #control-wrapper #airport-search {
     max-width: 100%;
 }
+
+
+
+
+
+
+
+
+
+@media (max-width: 420px) {
+    #control-wrapper {
+        left: 8px;
+    }
+
+    #control-wrapper.collapsed {
+        transform: translateX(calc(-100% - 8px));
+    }
+}
+
+
+
 
 
