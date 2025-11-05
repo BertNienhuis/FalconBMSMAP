@@ -54,13 +54,14 @@
                         const radius = f.get('radius');
 
                         if (!isNaN(radius)) {
-                        const circle = new ol.geom.Circle(center, radius);
-                        const circleFeature = new ol.Feature(circle);
-
-                        circleFeature.setProperties(f.getProperties());
-                        circleFeature.setGeometry(circle);
-                        window.whiteboardSource?.addFeature(circleFeature);
-                        break;
+                            const circle = new ol.geom.Circle(center, radius);
+                            const circleFeature = new ol.Feature(circle);
+                            const props = { ...f.getProperties() };
+                            delete props.geometry;
+                            circleFeature.setProperties(props);
+                            circleFeature.setGeometry(circle);
+                            window.whiteboardSource?.addFeature(circleFeature);
+                            break;
                         }
                     }
 
@@ -151,17 +152,21 @@
                     if (geom instanceof ol.geom.Circle) {
                         const center = geom.getCenter();
                         const radius = geom.getRadius();
-            
+
                         const circleAsPoint = new ol.Feature({
                             geometry: new ol.geom.Point(center)
                         });
-            
+
+                        const props = { ...f.getProperties() };
+                        delete props.geometry;
+
                         circleAsPoint.setProperties({
+                            ...props,
                             __layer: 'whiteboard',
                             originalShape: 'circle',
                             radius
                         });
-            
+
                         return circleAsPoint;
                     } else {
                         // Other geometry types

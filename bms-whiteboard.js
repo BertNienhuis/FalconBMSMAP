@@ -3,14 +3,24 @@ let whiteboardLayer = null;
 let whiteboardDrawInteraction = null;
 let whiteboardEnabled = false;
 let currentDrawType = 'Freehand';
-const currentColor = 'red';
 let whiteboardDragPan = null;
 
 const undoStack = [];
 const redoStack = [];
 
+const defaultWhiteboardStyle = Object.freeze({
+    strokeColor: '#ff0000',
+    fillColor: '#ff0000',
+    fillOpacity: 0.2,
+    lineWidth: 2,
+    lineType: 'full'
+});
+
+const VALID_LINE_TYPES = ['full', 'striped', 'dotted'];
+
+let whiteboardStyleOptions = { ...defaultWhiteboardStyle };
+
 function initWhiteboard(map) {
-    // Clear existing interaction and layer (in case of re-init)
     if (whiteboardDrawInteraction) {
         map.removeInteraction(whiteboardDrawInteraction);
         whiteboardDrawInteraction = null;
@@ -23,24 +33,19 @@ function initWhiteboard(map) {
     whiteboardSource = new ol.source.Vector();
     whiteboardLayer = new ol.layer.Vector({
         source: whiteboardSource,
-        style: feature => {
-            return new ol.style.Style({
-                stroke: new ol.style.Stroke({
-                    color: currentColor,
-                    width: 2
-                }),
-                fill: new ol.style.Fill({
-                    color: 'rgba(0, 0, 0, 0)' // transparent fill
-                })
-            });
-        }
+        style: feature => buildDrawingStyles(getFeatureStyleOptions(feature), feature, false)
     });
     map.addLayer(whiteboardLayer);
 
-    // Rebind drag pan from new map
+    whiteboardSource.on('addfeature', (event) => {
+        const feature = event.feature;
+        const options = getFeatureStyleOptions(feature);
+        feature.set('whiteboardStyle', options);
+        feature.setStyle(buildDrawingStyles(options, feature, false));
+    });
+
     whiteboardDragPan = map.getInteractions().getArray().find(i => i instanceof ol.interaction.DragPan);
 
-    // Rebind tool buttons
     const tools = {
         'whiteboard-pencil': 'Freehand',
         'whiteboard-rect': 'Rectangle',
@@ -55,13 +60,10 @@ function initWhiteboard(map) {
                 const isAlreadyActive = btn.classList.contains('active');
                 window.deactivateAllTools(map);
                 if (isAlreadyActive) {
-                    // Toggle OFF
                     disableWhiteboardDrawing(map);
                     whiteboardEnabled = false;
                     btn.classList.remove('active');
                 } else {
-                    // Toggle ON
-                    
                     toggleDraw(map, type);
                     setActiveButton(btn);
                 }
@@ -69,14 +71,148 @@ function initWhiteboard(map) {
         }
     }
 
+    setupWhiteboardStyleControls();
+
     window.whiteboardLayer = whiteboardLayer;
     window.whiteboardSource = whiteboardSource;
 
-    document.getElementById('whiteboard-eraser')?.addEventListener('click', () => {
-        whiteboardSource.clear();
-    });
+    const eraser = document.getElementById('whiteboard-eraser');
+    if (eraser) {
+        eraser.onclick = () => {
+            whiteboardSource.clear();
+            undoStack.length = 0;
+            redoStack.length = 0;
+        };
+    }
 }
 
+function setupWhiteboardStyleControls() {
+    const strokeColorInput = document.getElementById('whiteboard-stroke-color');
+    if (strokeColorInput) {
+        strokeColorInput.value = whiteboardStyleOptions.strokeColor;
+        strokeColorInput.oninput = (event) => {
+            whiteboardStyleOptions = normalizeStyleOptions({
+                ...whiteboardStyleOptions,
+                strokeColor: event.target.value
+            });
+            refreshActiveDrawStyle();
+        };
+    }
+
+    const fillColorInput = document.getElementById('whiteboard-fill-color');
+    if (fillColorInput) {
+        fillColorInput.value = whiteboardStyleOptions.fillColor;
+        fillColorInput.oninput = (event) => {
+            whiteboardStyleOptions = normalizeStyleOptions({
+                ...whiteboardStyleOptions,
+                fillColor: event.target.value
+            });
+            refreshActiveDrawStyle();
+        };
+    }
+
+    const lineWidthInput = document.getElementById('whiteboard-line-width');
+    if (lineWidthInput) {
+        lineWidthInput.value = String(whiteboardStyleOptions.lineWidth);
+        lineWidthInput.oninput = (event) => {
+            const width = Number(event.target.value);
+            whiteboardStyleOptions = normalizeStyleOptions({
+                ...whiteboardStyleOptions,
+                lineWidth: width
+            });
+            refreshActiveDrawStyle();
+        };
+    }
+
+    const fillOpacityInput = document.getElementById('whiteboard-fill-opacity');
+    if (fillOpacityInput) {
+        fillOpacityInput.value = String(Math.round(whiteboardStyleOptions.fillOpacity * 100));
+        fillOpacityInput.oninput = (event) => {
+            const opacity = Number(event.target.value) / 100;
+            whiteboardStyleOptions = normalizeStyleOptions({
+                ...whiteboardStyleOptions,
+                fillOpacity: opacity
+            });
+            refreshActiveDrawStyle();
+        };
+    }
+
+    const lineTypeSelect = document.getElementById('whiteboard-line-type');
+    if (lineTypeSelect) {
+        lineTypeSelect.value = whiteboardStyleOptions.lineType;
+        lineTypeSelect.onchange = (event) => {
+            const value = event.target.value;
+            whiteboardStyleOptions = normalizeStyleOptions({
+                ...whiteboardStyleOptions,
+                lineType: VALID_LINE_TYPES.includes(value) ? value : defaultWhiteboardStyle.lineType
+            });
+            refreshActiveDrawStyle();
+        };
+    }
+
+    updateStyleIndicators();
+    window.whiteboardStyleOptions = { ...whiteboardStyleOptions };
+}
+
+function refreshActiveDrawStyle() {
+    updateStyleIndicators();
+    if (whiteboardDrawInteraction) {
+        whiteboardDrawInteraction.setStyle(sketchStyleFunction);
+    }
+    window.whiteboardStyleOptions = { ...whiteboardStyleOptions };
+}
+
+function updateStyleIndicators() {
+    whiteboardStyleOptions = normalizeStyleOptions(whiteboardStyleOptions);
+    const snapshot = whiteboardStyleOptions;
+
+    const widthValue = document.getElementById('whiteboard-line-width-value');
+    if (widthValue) {
+        widthValue.textContent = `${snapshot.lineWidth}px`;
+    }
+
+    const opacityValue = document.getElementById('whiteboard-fill-opacity-value');
+    if (opacityValue) {
+        opacityValue.textContent = `${Math.round(snapshot.fillOpacity * 100)}%`;
+    }
+
+    const strokeColorInput = document.getElementById('whiteboard-stroke-color');
+    if (strokeColorInput) {
+        strokeColorInput.value = snapshot.strokeColor;
+    }
+
+    const fillColorInput = document.getElementById('whiteboard-fill-color');
+    if (fillColorInput) {
+        fillColorInput.value = snapshot.fillColor;
+    }
+
+    const lineWidthInput = document.getElementById('whiteboard-line-width');
+    if (lineWidthInput) {
+        lineWidthInput.value = String(snapshot.lineWidth);
+    }
+
+    const fillOpacityInput = document.getElementById('whiteboard-fill-opacity');
+    if (fillOpacityInput) {
+        fillOpacityInput.value = String(Math.round(snapshot.fillOpacity * 100));
+    }
+
+    const lineTypeSelect = document.getElementById('whiteboard-line-type');
+    if (lineTypeSelect) {
+        lineTypeSelect.value = snapshot.lineType;
+    }
+}
+
+function getFeatureStyleOptions(feature) {
+    const stored = feature.get('whiteboardStyle');
+    if (stored) {
+        return normalizeStyleOptions(stored);
+    }
+    return normalizeStyleOptions(whiteboardStyleOptions);
+}
+
+function getCurrentStyleSnapshot() {
+    return normalizeStyleOptions(whiteboardStyleOptions);
+}
 
 function toggleDraw(map, type) {
     if (currentDrawType === type && whiteboardEnabled) {
@@ -123,11 +259,14 @@ function enableWhiteboardDrawing(map) {
         type: drawType,
         geometryFunction,
         freehand,
-        style: getDrawingStyle()
+        style: sketchStyleFunction
     });
 
     whiteboardDrawInteraction.on('drawend', (event) => {
         const feature = event.feature;
+        const styleOptions = getCurrentStyleSnapshot();
+        feature.set('whiteboardStyle', styleOptions);
+        feature.setStyle(buildDrawingStyles(styleOptions, feature, false));
         undoStack.push(feature);
         redoStack.length = 0;
 
@@ -150,39 +289,138 @@ function disableWhiteboardDrawing(map) {
     whiteboardDragPan?.setActive(true);
 }
 
-function getDrawingStyle() {
-    return (feature) => {
-        const geometry = feature.getGeometry();
-        const type = geometry.getType();
+function sketchStyleFunction(feature) {
+    return buildDrawingStyles(whiteboardStyleOptions, feature, true);
+}
 
-        const shapeStyle = new ol.style.Style({
-            stroke: new ol.style.Stroke({
-                color: currentColor,
-                width: 2,
-                lineDash: [4, 4]
-            }),
-            fill: new ol.style.Fill({
-                color: 'rgba(255, 0, 0, 0.1)'
-            })
-        });
+function buildDrawingStyles(styleOptions, feature, includeHandle) {
+    const normalized = normalizeStyleOptions(styleOptions);
+    const styles = [createShapeStyle(normalized)];
+    if (!includeHandle) {
+        return styles;
+    }
+    const handle = createHandleStyle(feature);
+    if (handle) {
+        styles.push(handle);
+    }
+    return styles;
+}
 
-        const pointStyle = new ol.style.Style({
-            image: new ol.style.Circle({
-                radius: 5,
-                fill: new ol.style.Fill({ color: 'rgba(0, 153, 255, 0.9)' }),
-                stroke: new ol.style.Stroke({ color: 'white', width: 1 })
-            }),
-            geometry: function () {
-                if (type === 'Point') return geometry;
-                const coords = geometry.getCoordinates();
-                if (type === 'LineString') return new ol.geom.Point(coords[coords.length - 1]);
-                if (type === 'Polygon') return new ol.geom.Point(coords[0][coords[0].length - 1]);
-                return null;
-            }
-        });
+function createShapeStyle(options) {
+    const stroke = new ol.style.Stroke({
+        color: options.strokeColor,
+        width: options.lineWidth,
+        lineDash: getLineDashPattern(options.lineType),
+        lineCap: options.lineType === 'dotted' ? 'round' : 'butt'
+    });
 
-        return [shapeStyle, pointStyle];
+    const fillColor = hexToRgba(options.fillColor, options.fillOpacity);
+
+    return new ol.style.Style({
+        stroke,
+        fill: new ol.style.Fill({
+            color: fillColor
+        })
+    });
+}
+
+function createHandleStyle(feature) {
+    const geometry = feature.getGeometry();
+    if (!geometry) return null;
+    const type = geometry.getType();
+    if (type === 'Point') return null;
+
+    const handleStyle = new ol.style.Style({
+        image: new ol.style.Circle({
+            radius: 5,
+            fill: new ol.style.Fill({ color: 'rgba(0, 153, 255, 0.9)' }),
+            stroke: new ol.style.Stroke({ color: 'white', width: 1 })
+        })
+    });
+
+    handleStyle.setGeometry(() => {
+        const geom = feature.getGeometry();
+        if (!geom) return null;
+        const geomType = geom.getType();
+        if (geomType === 'Point') return geom;
+        const coords = geom.getCoordinates();
+        if (!coords) return null;
+        if (Array.isArray(coords) && geomType === 'LineString') {
+            return new ol.geom.Point(coords[coords.length - 1]);
+        }
+        if (Array.isArray(coords) && geomType === 'Polygon') {
+            const ring = coords[0] || [];
+            return ring.length ? new ol.geom.Point(ring[ring.length - 1]) : null;
+        }
+        return null;
+    });
+
+    return handleStyle;
+}
+
+function getLineDashPattern(type) {
+    switch (type) {
+        case 'striped':
+            return [10, 6];
+        case 'dotted':
+            return [2, 6];
+        default:
+            return undefined;
+    }
+}
+
+function hexToRgba(hex, alpha) {
+    if (!isHexColor(hex)) {
+        return hex;
+    }
+    let value = hex.replace('#', '');
+    if (value.length === 3) {
+        value = value.split('').map(ch => ch + ch).join('');
+    }
+    const bigint = parseInt(value, 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    const resolvedAlpha = clamp(alpha, 0, 1, defaultWhiteboardStyle.fillOpacity);
+    return `rgba(${r}, ${g}, ${b}, ${resolvedAlpha})`;
+}
+
+function clamp(value, min, max, fallback) {
+    const number = Number(value);
+    if (Number.isNaN(number)) {
+        return fallback;
+    }
+    return Math.min(Math.max(number, min), max);
+}
+
+function isHexColor(value) {
+    return typeof value === 'string' && /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/.test(value);
+}
+
+function normalizeStyleOptions(options) {
+    const base = {
+        strokeColor: defaultWhiteboardStyle.strokeColor,
+        fillColor: defaultWhiteboardStyle.fillColor,
+        fillOpacity: defaultWhiteboardStyle.fillOpacity,
+        lineWidth: defaultWhiteboardStyle.lineWidth,
+        lineType: defaultWhiteboardStyle.lineType
     };
+
+    if (options) {
+        if (isHexColor(options.strokeColor)) {
+            base.strokeColor = options.strokeColor;
+        }
+        if (isHexColor(options.fillColor)) {
+            base.fillColor = options.fillColor;
+        } else {
+            base.fillColor = base.strokeColor;
+        }
+        base.fillOpacity = clamp(options.fillOpacity, 0, 1, defaultWhiteboardStyle.fillOpacity);
+        base.lineWidth = clamp(options.lineWidth, 1, 20, defaultWhiteboardStyle.lineWidth);
+        base.lineType = VALID_LINE_TYPES.includes(options.lineType) ? options.lineType : defaultWhiteboardStyle.lineType;
+    }
+
+    return base;
 }
 
 function setActiveButton(activeBtn) {
@@ -191,4 +429,3 @@ function setActiveButton(activeBtn) {
     });
     activeBtn.classList.add('active');
 }
-

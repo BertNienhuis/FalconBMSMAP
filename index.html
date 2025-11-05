@@ -53,20 +53,82 @@
             </button>
         </div>
 
-        <div class="tool-group">
+        <div class="tool-group whiteboard-tools">
             <div class="tool-group-header">Whiteboard</div>
-            <button id="whiteboard-pencil" class="button" title="Free draw (Q)"><i data-lucide="pencil"></i> Pencil
-                (q)</button>
-            <button id="whiteboard-polygon" class="button" title="Polygon (W)"><i data-lucide="triangle"></i> Polygon
-                (w)</button>
-            <button id="whiteboard-circle" class="button" title="Circle (E)"><i data-lucide="circle"></i> Circle
-                (e)</button>
-            <button id="whiteboard-rect" class="button" title="Rectangle (R)"><i data-lucide="square"></i> Rectangle
-                (r)</button>
-            <button id="whiteboard-undo" class="button" title="Undo (Z)"><i data-lucide="undo-2"></i> Undo</button>
-            <button id="whiteboard-redo" class="button" title="Redo (Y)"><i data-lucide="redo-2"></i> Redo</button>
-            <button id="whiteboard-eraser" class="button" title="Clear whiteboard"><i data-lucide="eraser"></i>
-                Clean</button>
+            <div class="whiteboard-toolset">
+                <div class="whiteboard-draw-group" role="group" aria-label="Whiteboard draw tools">
+                    <button id="whiteboard-pencil" class="button whiteboard-button" title="Free draw (Q)">
+                        <i data-lucide="pencil"></i>
+                        <span class="whiteboard-button-label">Pencil</span>
+                        <span class="whiteboard-button-hint">Q</span>
+                    </button>
+                    <button id="whiteboard-polygon" class="button whiteboard-button" title="Polygon (W)">
+                        <i data-lucide="triangle"></i>
+                        <span class="whiteboard-button-label">Polygon</span>
+                        <span class="whiteboard-button-hint">W</span>
+                    </button>
+                    <button id="whiteboard-circle" class="button whiteboard-button" title="Circle (E)">
+                        <i data-lucide="circle"></i>
+                        <span class="whiteboard-button-label">Circle</span>
+                        <span class="whiteboard-button-hint">E</span>
+                    </button>
+                    <button id="whiteboard-rect" class="button whiteboard-button" title="Rectangle (R)">
+                        <i data-lucide="square"></i>
+                        <span class="whiteboard-button-label">Rectangle</span>
+                        <span class="whiteboard-button-hint">R</span>
+                    </button>
+                </div>
+                <div class="whiteboard-edit-group" role="group" aria-label="Whiteboard actions">
+                    <button id="whiteboard-undo" class="button whiteboard-button" title="Undo (Z)">
+                        <i data-lucide="undo-2"></i>
+                        <span class="whiteboard-button-label">Undo</span>
+                        <span class="whiteboard-button-hint">Z</span>
+                    </button>
+                    <button id="whiteboard-redo" class="button whiteboard-button" title="Redo (Y)">
+                        <i data-lucide="redo-2"></i>
+                        <span class="whiteboard-button-label">Redo</span>
+                        <span class="whiteboard-button-hint">Y</span>
+                    </button>
+                    <button id="whiteboard-eraser" class="button whiteboard-button" title="Clear whiteboard">
+                        <i data-lucide="eraser"></i>
+                        <span class="whiteboard-button-label">Clean</span>
+                    </button>
+                </div>
+                <div class="whiteboard-style-group" aria-label="Whiteboard styles">
+                    <div class="whiteboard-style-grid">
+                        <label class="whiteboard-style-control" for="whiteboard-stroke-color">
+                            <span class="whiteboard-style-text">Line</span>
+                            <input type="color" id="whiteboard-stroke-color" value="#ff0000" aria-label="Line color">
+                        </label>
+                        <label class="whiteboard-style-control" for="whiteboard-fill-color">
+                            <span class="whiteboard-style-text">Fill</span>
+                            <input type="color" id="whiteboard-fill-color" value="#ff0000" aria-label="Fill color">
+                        </label>
+                    </div>
+                    <label class="whiteboard-style-control whiteboard-style-range" for="whiteboard-line-width">
+                        <div class="whiteboard-style-header">
+                            <span class="whiteboard-style-text">Width</span>
+                            <span class="whiteboard-style-value" id="whiteboard-line-width-value">2px</span>
+                        </div>
+                        <input type="range" id="whiteboard-line-width" min="1" max="10" step="1" value="2" aria-label="Line width">
+                    </label>
+                    <label class="whiteboard-style-control whiteboard-style-range" for="whiteboard-fill-opacity">
+                        <div class="whiteboard-style-header">
+                            <span class="whiteboard-style-text">Opacity</span>
+                            <span class="whiteboard-style-value" id="whiteboard-fill-opacity-value">20%</span>
+                        </div>
+                        <input type="range" id="whiteboard-fill-opacity" min="0" max="100" step="5" value="20" aria-label="Fill opacity">
+                    </label>
+                    <label class="whiteboard-style-control whiteboard-style-select" for="whiteboard-line-type">
+                        <span class="whiteboard-style-text">Type</span>
+                        <select id="whiteboard-line-type" aria-label="Line pattern">
+                            <option value="full" selected>Full</option>
+                            <option value="striped">Striped</option>
+                            <option value="dotted">Dotted</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
         </div>
         <div class="tool-group">
             <div class="tool-group-header">Import / Export</div>
