@@ -23,16 +23,14 @@
 
 
     <!-- Control Bar -->
-    <div id="control-bar">
-        <div class="tool-group">
-            <label for="theater-select" class="button">
-                <i data-lucide="map"></i>
-                <select id="theater-select">
-                    <option value="Korea">Korea</option>
-                    <option value="Israel">Israel</option>
-                    <option value="Balkans">Balkans</option>
-                </select>
-            </label>
+    <div id="control-wrapper">
+        <div id="control-bar" role="complementary" aria-label="Toolbar">
+            <div class="tool-group">
+                <select id="theater-select" class="glass-select map-select" aria-label="Select theater">
+                <option value="Korea">Korea</option>
+                <option value="Israel">Israel</option>
+                <option value="Balkans">Balkans</option>
+            </select>
             <input id="airport-search" type="text" placeholder="Search airports..." />
             <ul id="airport-search-results" class="hidden"></ul>
         </div>
@@ -95,33 +93,33 @@
                     </button>
                 </div>
                 <div class="whiteboard-style-group" aria-label="Whiteboard styles">
-                    <div class="whiteboard-style-grid">
-                        <label class="whiteboard-style-control" for="whiteboard-stroke-color">
+                    <div class="whiteboard-style-grid compact">
+                        <label class="whiteboard-style-control whiteboard-style-color" for="whiteboard-stroke-color">
                             <span class="whiteboard-style-text">Line</span>
                             <input type="color" id="whiteboard-stroke-color" value="#ff0000" aria-label="Line color">
                         </label>
-                        <label class="whiteboard-style-control" for="whiteboard-fill-color">
+                        <label class="whiteboard-style-control whiteboard-style-color" for="whiteboard-fill-color">
                             <span class="whiteboard-style-text">Fill</span>
                             <input type="color" id="whiteboard-fill-color" value="#ff0000" aria-label="Fill color">
                         </label>
                     </div>
-                    <label class="whiteboard-style-control whiteboard-style-range" for="whiteboard-line-width">
-                        <div class="whiteboard-style-header">
-                            <span class="whiteboard-style-text">Width</span>
-                            <span class="whiteboard-style-value" id="whiteboard-line-width-value">2px</span>
-                        </div>
-                        <input type="range" id="whiteboard-line-width" min="1" max="10" step="1" value="2" aria-label="Line width">
-                    </label>
-                    <label class="whiteboard-style-control whiteboard-style-range" for="whiteboard-fill-opacity">
-                        <div class="whiteboard-style-header">
-                            <span class="whiteboard-style-text">Opacity</span>
-                            <span class="whiteboard-style-value" id="whiteboard-fill-opacity-value">20%</span>
-                        </div>
-                        <input type="range" id="whiteboard-fill-opacity" min="0" max="100" step="5" value="20" aria-label="Fill opacity">
-                    </label>
-                    <label class="whiteboard-style-control whiteboard-style-select" for="whiteboard-line-type">
+                    <div class="whiteboard-style-grid compact">
+                        <label class="whiteboard-style-control whiteboard-style-range" for="whiteboard-line-width">
+                            <div class="whiteboard-style-header">
+                                <span class="whiteboard-style-text">Width</span>
+                            </div>
+                            <input type="range" id="whiteboard-line-width" min="1" max="10" step="1" value="2" aria-label="Line width">
+                        </label>
+                        <label class="whiteboard-style-control whiteboard-style-range" for="whiteboard-fill-opacity">
+                            <div class="whiteboard-style-header">
+                                <span class="whiteboard-style-text">Opacity</span>
+                            </div>
+                            <input type="range" id="whiteboard-fill-opacity" min="0" max="100" step="5" value="20" aria-label="Fill opacity">
+                        </label>
+                    </div>
+                    <label class="whiteboard-style-control whiteboard-style-select compact-select" for="whiteboard-line-type">
                         <span class="whiteboard-style-text">Type</span>
-                        <select id="whiteboard-line-type" aria-label="Line pattern">
+                        <select id="whiteboard-line-type" class="glass-select" aria-label="Line pattern">
                             <option value="full" selected>Full</option>
                             <option value="striped">Striped</option>
                             <option value="dotted">Dotted</option>
@@ -130,28 +128,30 @@
                 </div>
             </div>
         </div>
-        <div class="tool-group">
-            <div class="tool-group-header">Import / Export</div>
-            <label class="button" title="Import layers">
-                <i data-lucide="download"></i> Import layers
-                <input type="file" id="import-layers" accept=".json" style="display: none;">
-            </label>
-            <button id="export-layers" class="button" title="Export layers">
-                <i data-lucide="upload"></i> Export layers
-            </button>
+            <div class="tool-group">
+                <div class="tool-group-header">Import / Export</div>
+                <label class="button" title="Import layers">
+                    <i data-lucide="download"></i> Import layers
+                    <input type="file" id="import-layers" accept=".json" style="display: none;">
+                </label>
+                <button id="export-layers" class="button" title="Export layers">
+                    <i data-lucide="upload"></i> Export layers
+                </button>
+            </div>
         </div>
-
+        <button id="control-toggle" class="glass-toggle tool-close" title="Hide toolbar" aria-expanded="true" aria-controls="control-bar">
+            <i id="control-toggle-icon" data-lucide="x"></i>
+        </button>
     </div>
-    <!-- Toggle control bar -->
-    <button id="control-toggle" title="Collapse panel">
-        <i id="control-toggle-icon" data-lucide="arrow-left-from-line"></i>
+    <button id="control-toggle-open" class="glass-toggle tool-open" title="Show toolbar" aria-controls="control-bar" aria-expanded="false">
+        <i data-lucide="panel-left-open"></i>
     </button>
 
     <!-- Marker Popup -->
     <div id="marker-popup" class="marker-popup hidden">
         <div class="marker-row">
             <label for="marker-domain">Domain:</label>
-            <select id="marker-domain">
+            <select id="marker-domain" class="glass-select marker-select">
                 <option value="land">Land</option>
                 <option value="air">Air</option>
                 <option value="sea">Sea</option>
@@ -160,7 +160,7 @@
 
         <div class="marker-row">
             <label for="marker-type">Type:</label>
-            <select id="marker-type"></select>
+            <select id="marker-type" class="glass-select marker-select"></select>
         </div>
 
         <fieldset id="marker-identity-options">
@@ -410,18 +410,43 @@
             if (isRulerActive) e.preventDefault();
         }, { passive: false });
 
-        //Toggle control panel
-        document.getElementById('control-toggle').addEventListener('click', () => {
-            const controlBar = document.getElementById('control-bar');
-            const icon = document.getElementById('control-toggle-icon');
+        // Toggle control panel
+        const toolbarToggle = document.getElementById('control-toggle');
+        const controlWrapper = document.getElementById('control-wrapper');
+        const controlBar = document.getElementById('control-bar');
+        const toggleIcon = document.getElementById('control-toggle-icon');
+        const toolbarOpenButton = document.getElementById('control-toggle-open');
 
-            const isCollapsed = controlBar.classList.toggle('collapsed');
-            icon.setAttribute('data-lucide', isCollapsed ? 'arrow-right-from-line' : 'arrow-left-from-line');
+        function updateToolbarState(collapsed) {
+            if (!controlWrapper || !toolbarToggle || !toggleIcon) return;
+            const isCurrentlyCollapsed = controlWrapper.classList.contains('collapsed');
+            if (collapsed === isCurrentlyCollapsed) return;
+            toolbarToggle.setAttribute('aria-expanded', String(!collapsed));
+            controlWrapper.classList.toggle('collapsed', collapsed);
+            toggleIcon.setAttribute('data-lucide', 'x');
             lucide.createIcons();
-
-             // Cancel all active modes if collapsing
-            if (isCollapsed) {
+            if (toolbarOpenButton) {
+                toolbarOpenButton.classList.toggle('visible', collapsed);
+                toolbarOpenButton.setAttribute('aria-expanded', String(collapsed));
+            }
+            if (collapsed) {
                 deactivateAllTools();
+            }
+        }
+
+        toolbarToggle?.addEventListener('click', () => {
+            const collapsed = controlBar?.classList.contains('collapsed') ?? false;
+            updateToolbarState(!collapsed);
+        });
+
+        toolbarOpenButton?.addEventListener('click', () => {
+            updateToolbarState(false);
+        });
+
+        // Allow ESC to hide toolbar
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !controlBar.classList.contains('collapsed')) {
+                updateToolbarState(true);
             }
         });
 

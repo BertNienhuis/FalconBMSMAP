@@ -16,10 +16,21 @@ body {
 
 
 
-#control-bar {
+#control-wrapper {
     position: absolute;
-    left: 0;
-    top: 10px;
+    top: 20px;
+    left: 24px;
+    z-index: 1000;
+    transition: transform 0.35s ease, opacity 0.3s ease;
+}
+
+#control-wrapper.collapsed {
+    transform: translateX(-180px) scale(0.95);
+    opacity: 0;
+    pointer-events: none;
+}
+
+#control-bar {
     background: rgba(255, 255, 255, 0.28);
     display: flex;
     flex-direction: column;
@@ -30,49 +41,95 @@ body {
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 0px 4px 4px 0px;
+    border-radius: 12px;
     overflow-y: auto;
-    transition: transform 0.3s ease;
-    z-index: 1000;
+    overflow-x: hidden;
     width: 140px;
-    /* Needed for positioning */
-}
-
-/* Slide panel left by its full width when collapsed */
-#control-bar.collapsed {
-    transform: translateX(-220px);
-    /* width - toggle button width */
 }
 
 #control-toggle {
     position: absolute;
-    top: 17px;
-    left: 160px;
-    background: rgba(255, 255, 255, 0.28);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    padding: 4px;
-    border-radius: 0px 4px 4px 0px;
+    top: -12px;
+    right: -12px;
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.34));
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 50%;
     cursor: pointer;
-    font-weight: bold;
     z-index: 1001;
-    transition: transform 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     display: flex;
     align-items: center;
-    color: #1f2933;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    justify-content: center;
+    color: #0f172a;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.2);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+#control-toggle:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.24);
+}
+
+#control-toggle:active {
+    transform: translateY(0);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.2);
+}
+
+#control-toggle i {
+    width: 16px;
+    height: 16px;
+}
+
+#control-toggle-open {
+    position: absolute;
+    top: 20px;
+    left: 24px;
+    width: 36px;
+    height: 36px;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.32));
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0f172a;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.18);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#control-toggle-open i {
+    width: 18px;
+    height: 18px;
+}
+
+#control-toggle-open.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#control-toggle-open.visible:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.24);
+}
+
+#control-toggle-open.visible:active {
+    transform: translateY(0);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.2);
 }
 
 
 /* When collapsed, move toggle button left too */
-#control-bar.collapsed{
-    left: 0px !important;
-}
-
-/* Move toggle with panel when collapsed */
-#control-bar.collapsed+#control-toggle {
-    transform: translateX(-160px);
+#control-wrapper.collapsed #control-toggle {
+    transform: translateY(-1px);
 }
 
 
@@ -204,8 +261,8 @@ body {
 .whiteboard-style-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 6px;
+    gap: 4px;
+    padding: 4px 6px;
     border: 1px solid rgba(255, 255, 255, 0.35);
     border-radius: 6px;
     background-color: rgba(255, 255, 255, 0.32);
@@ -216,21 +273,54 @@ body {
 .whiteboard-style-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+    gap: 4px;
+}
+
+.whiteboard-style-grid.compact {
+    gap: 4px;
 }
 
 .whiteboard-style-control {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     font-size: 11px;
-    color: #333;
+    color: #0f172a;
+    padding: 2px 2px 4px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+}
+
+.whiteboard-style-color {
+    align-items: stretch;
+    padding: 4px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.3));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.whiteboard-style-range {
+    padding: 4px 4px 6px;
+    background: rgba(255, 255, 255, 0.26);
+    border-radius: 6px;
+}
+
+.whiteboard-style-select {
+    padding: 4px 4px 6px;
+    background: rgba(255, 255, 255, 0.26);
+    border-radius: 6px;
+}
+
+.compact-select {
+    padding: 4px 4px 6px;
 }
 
 .whiteboard-style-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding-bottom: 2px;
 }
 
 .whiteboard-style-text {
@@ -242,21 +332,86 @@ body {
 .whiteboard-style-control input[type="color"] {
     width: 100%;
     height: 28px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 6px;
     padding: 0;
     background: #fff;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
 }
 
 .whiteboard-style-control input[type="range"] {
     width: 100%;
-    accent-color: #007bff;
+    accent-color: #2563eb;
+    height: 6px;
+    margin: 0;
+    appearance: none;
+    background: transparent;
 }
 
-.whiteboard-style-value {
-    font-size: 10px;
-    color: #444;
-    font-weight: 600;
+.whiteboard-style-color .whiteboard-style-text {
+    margin-bottom: 2px;
+}
+
+.whiteboard-style-control input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    background: rgba(15, 23, 42, 0.15);
+    border-radius: 999px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.whiteboard-style-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 14px;
+    width: 14px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.85), rgba(37, 99, 235, 0.65));
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+    margin-top: -4px;
+}
+
+.whiteboard-style-control input[type="range"]::-moz-range-track {
+    height: 6px;
+    background: rgba(15, 23, 42, 0.15);
+    border-radius: 999px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.whiteboard-style-control input[type="range"]::-moz-range-thumb {
+    height: 14px;
+    width: 14px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.85), rgba(37, 99, 235, 0.65));
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+}
+
+.whiteboard-style-control input[type="range"]::-ms-track {
+    height: 6px;
+    background: transparent;
+    border-color: transparent;
+    color: transparent;
+}
+
+.whiteboard-style-control input[type="range"]::-ms-fill-lower,
+.whiteboard-style-control input[type="range"]::-ms-fill-upper {
+    background: rgba(15, 23, 42, 0.15);
+    border-radius: 999px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.whiteboard-style-control input[type="range"]::-ms-thumb {
+    height: 14px;
+    width: 14px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.85), rgba(37, 99, 235, 0.65));
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+    margin-top: 0;
+}
+
+.whiteboard-style-control input[type="range"]:focus-visible {
+    outline: none;
 }
 
 .whiteboard-style-select select,
@@ -264,7 +419,7 @@ body {
     width: 100%;
     height: 26px;
     border: 1px solid rgba(255, 255, 255, 0.35);
-    border-radius: 4px;
+    border-radius: 6px;
     background: rgba(255, 255, 255, 0.6);
     font-size: 11px;
 }
@@ -311,6 +466,42 @@ body {
 .button[aria-pressed="true"]:hover {
     border-color: rgba(59, 130, 246, 0.75);
     box-shadow: 0 10px 24px rgba(37, 99, 235, 0.4);
+}
+
+.glass-select {
+    display: block;
+    width: 100%;
+    padding: 6px 32px 6px 10px;
+    font-size: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background-image:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.3)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%230f172a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat, no-repeat;
+    background-position: center, right 10px center;
+    background-size: auto, 12px;
+    appearance: none;
+    -webkit-appearance: none;
+    color: #0f172a;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+    box-sizing: border-box;
+}
+
+.glass-select:focus-visible {
+    outline: none;
+    border-color: rgba(59, 130, 246, 0.75);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35);
+}
+
+.map-select {
+    margin-bottom: 8px;
+    min-height: 32px;
+}
+
+.marker-select {
+    min-height: 30px;
 }
 
 #control-bar select.button {
@@ -375,7 +566,7 @@ canvas {
 /* Select box styling */
 .marker-row select {
     flex: 1;
-    max-width: 150px;
+    max-width: none;
 }
 
 /* Identity fieldset */
@@ -451,11 +642,27 @@ canvas {
 
 
 #airport-search {
-    width: 120px;
-    padding: 4px 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    width: 130px;
+    padding: 6px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 8px;
     font-size: 13px;
+    color: #0f172a;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.3));
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#airport-search::placeholder {
+    color: rgba(15, 23, 42, 0.5);
+}
+
+#airport-search:focus-visible {
+    outline: none;
+    border-color: rgba(59, 130, 246, 0.75);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35);
 }
 
 #airport-search-results {
