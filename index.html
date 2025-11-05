@@ -49,87 +49,12 @@
             <button id="marker-button" class="button" title="Add marker"><i data-lucide="map-pin"></i> Marker</button>
             <button id="bullseye-button" class="button" title="Move Bullseye"><i data-lucide="crosshair"></i> Bullseye
             </button>
+            <button id="whiteboard-toolbar-toggle" class="button" title="Whiteboard tools" aria-controls="whiteboard-toolbar" aria-expanded="false"><i data-lucide="pen-tool"></i> Whiteboard
+            </button>
         </div>
 
-        <div class="tool-group whiteboard-tools">
-            <div class="tool-group-header">Whiteboard</div>
-            <div class="whiteboard-toolset">
-                <div class="whiteboard-draw-group" role="group" aria-label="Whiteboard draw tools">
-                    <button id="whiteboard-pencil" class="button whiteboard-button" title="Free draw (Q)">
-                        <i data-lucide="pencil"></i>
-                        <span class="whiteboard-button-label">Pencil</span>
-                        <span class="whiteboard-button-hint">Q</span>
-                    </button>
-                    <button id="whiteboard-polygon" class="button whiteboard-button" title="Polygon (W)">
-                        <i data-lucide="triangle"></i>
-                        <span class="whiteboard-button-label">Polygon</span>
-                        <span class="whiteboard-button-hint">W</span>
-                    </button>
-                    <button id="whiteboard-circle" class="button whiteboard-button" title="Circle (E)">
-                        <i data-lucide="circle"></i>
-                        <span class="whiteboard-button-label">Circle</span>
-                        <span class="whiteboard-button-hint">E</span>
-                    </button>
-                    <button id="whiteboard-rect" class="button whiteboard-button" title="Rectangle (R)">
-                        <i data-lucide="square"></i>
-                        <span class="whiteboard-button-label">Rectangle</span>
-                        <span class="whiteboard-button-hint">R</span>
-                    </button>
-                </div>
-                <div class="whiteboard-edit-group" role="group" aria-label="Whiteboard actions">
-                    <button id="whiteboard-undo" class="button whiteboard-button" title="Undo (Z)">
-                        <i data-lucide="undo-2"></i>
-                        <span class="whiteboard-button-label">Undo</span>
-                        <span class="whiteboard-button-hint">Z</span>
-                    </button>
-                    <button id="whiteboard-redo" class="button whiteboard-button" title="Redo (Y)">
-                        <i data-lucide="redo-2"></i>
-                        <span class="whiteboard-button-label">Redo</span>
-                        <span class="whiteboard-button-hint">Y</span>
-                    </button>
-                    <button id="whiteboard-eraser" class="button whiteboard-button" title="Clear whiteboard">
-                        <i data-lucide="eraser"></i>
-                        <span class="whiteboard-button-label">Clean</span>
-                    </button>
-                </div>
-                <div class="whiteboard-style-group" aria-label="Whiteboard styles">
-                    <div class="whiteboard-style-grid compact">
-                        <label class="whiteboard-style-control whiteboard-style-color" for="whiteboard-stroke-color">
-                            <span class="whiteboard-style-text">Line</span>
-                            <input type="color" id="whiteboard-stroke-color" value="#ff0000" aria-label="Line color">
-                        </label>
-                        <label class="whiteboard-style-control whiteboard-style-color" for="whiteboard-fill-color">
-                            <span class="whiteboard-style-text">Fill</span>
-                            <input type="color" id="whiteboard-fill-color" value="#ff0000" aria-label="Fill color">
-                        </label>
-                    </div>
-                    <div class="whiteboard-style-grid compact">
-                        <label class="whiteboard-style-control whiteboard-style-range" for="whiteboard-line-width">
-                            <div class="whiteboard-style-header">
-                                <span class="whiteboard-style-text">Width</span>
-                            </div>
-                            <input type="range" id="whiteboard-line-width" min="1" max="10" step="1" value="2" aria-label="Line width">
-                        </label>
-                        <label class="whiteboard-style-control whiteboard-style-range" for="whiteboard-fill-opacity">
-                            <div class="whiteboard-style-header">
-                                <span class="whiteboard-style-text">Opacity</span>
-                            </div>
-                            <input type="range" id="whiteboard-fill-opacity" min="0" max="100" step="5" value="20" aria-label="Fill opacity">
-                        </label>
-                    </div>
-                    <label class="whiteboard-style-control whiteboard-style-select compact-select" for="whiteboard-line-type">
-                        <span class="whiteboard-style-text">Type</span>
-                        <select id="whiteboard-line-type" class="glass-select" aria-label="Line pattern">
-                            <option value="full" selected>Full</option>
-                            <option value="striped">Striped</option>
-                            <option value="dotted">Dotted</option>
-                        </select>
-                    </label>
-                </div>
-            </div>
-        </div>
-            <div class="tool-group">
-                <div class="tool-group-header">Import / Export</div>
+        <div class="tool-group">
+            <div class="tool-group-header">Import / Export</div>
                 <label class="button" title="Import layers">
                     <i data-lucide="download"></i> Import layers
                     <input type="file" id="import-layers" accept=".json" style="display: none;">
@@ -146,6 +71,92 @@
     <button id="control-toggle-open" class="glass-toggle tool-open" title="Show toolbar" aria-controls="control-bar" aria-expanded="false">
         <i data-lucide="panel-left-open"></i>
     </button>
+
+    <div id="whiteboard-toolbar" class="whiteboard-toolbar hidden" aria-label="Whiteboard tools" aria-hidden="true">
+        <div class="whiteboard-toolset">
+            <div class="whiteboard-toolbar-row">
+                <div class="whiteboard-button-groups">
+                    <div class="whiteboard-draw-group" role="group" aria-label="Whiteboard draw tools">
+                        <button id="whiteboard-pencil" class="button whiteboard-button" title="Free draw (Q)">
+                            <i data-lucide="pencil"></i>
+                            <span class="whiteboard-button-label">Pencil</span>
+                            <span class="whiteboard-button-hint">Q</span>
+                        </button>
+                        <button id="whiteboard-polygon" class="button whiteboard-button" title="Polygon (W)">
+                            <i data-lucide="triangle"></i>
+                            <span class="whiteboard-button-label">Polygon</span>
+                            <span class="whiteboard-button-hint">W</span>
+                        </button>
+                        <button id="whiteboard-circle" class="button whiteboard-button" title="Circle (E)">
+                            <i data-lucide="circle"></i>
+                            <span class="whiteboard-button-label">Circle</span>
+                            <span class="whiteboard-button-hint">E</span>
+                        </button>
+                        <button id="whiteboard-rect" class="button whiteboard-button" title="Rectangle (R)">
+                            <i data-lucide="square"></i>
+                            <span class="whiteboard-button-label">Rectangle</span>
+                            <span class="whiteboard-button-hint">R</span>
+                        </button>
+                    </div>
+                    <div class="whiteboard-edit-group" role="group" aria-label="Whiteboard actions">
+                        <button id="whiteboard-undo" class="button whiteboard-button" title="Undo (Z)">
+                            <i data-lucide="undo-2"></i>
+                            <span class="whiteboard-button-label">Undo</span>
+                            <span class="whiteboard-button-hint">Z</span>
+                        </button>
+                        <button id="whiteboard-redo" class="button whiteboard-button" title="Redo (Y)">
+                            <i data-lucide="redo-2"></i>
+                            <span class="whiteboard-button-label">Redo</span>
+                            <span class="whiteboard-button-hint">Y</span>
+                        </button>
+                        <button id="whiteboard-eraser" class="button whiteboard-button" title="Clear whiteboard">
+                            <i data-lucide="eraser"></i>
+                            <span class="whiteboard-button-label">Clean</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="whiteboard-color-group whiteboard-style-grid whiteboard-style-grid--colors">
+                    <label class="whiteboard-style-control whiteboard-style-color" data-role="stroke">
+                        <span class="whiteboard-style-text">Line</span>
+                        <span class="whiteboard-color-picker">
+                            <span class="whiteboard-color-swatch" data-role="stroke"></span>
+                            <input type="color" id="whiteboard-stroke-color" value="#ff0000" aria-label="Line color">
+                        </span>
+                    </label>
+                    <label class="whiteboard-style-control whiteboard-style-color" data-role="fill">
+                        <span class="whiteboard-style-text">Fill</span>
+                        <span class="whiteboard-color-picker">
+                            <span class="whiteboard-color-swatch" data-role="fill"></span>
+                            <input type="color" id="whiteboard-fill-color" value="#ff0000" aria-label="Fill color">
+                        </span>
+                    </label>
+                </div>
+            </div>
+            <div class="whiteboard-style-group" aria-label="Whiteboard styles">
+                <div class="whiteboard-style-grid compact whiteboard-style-grid--sliders">
+                    <label class="whiteboard-style-control whiteboard-style-range" for="whiteboard-line-width">
+                        <div class="whiteboard-style-header">
+                            <span class="whiteboard-style-text">Width</span>
+                        </div>
+                        <input type="range" id="whiteboard-line-width" min="1" max="10" step="1" value="2" aria-label="Line width">
+                    </label>
+                    <label class="whiteboard-style-control whiteboard-style-range" for="whiteboard-fill-opacity">
+                        <div class="whiteboard-style-header">
+                            <span class="whiteboard-style-text">Opacity</span>
+                        </div>
+                        <input type="range" id="whiteboard-fill-opacity" min="0" max="100" step="5" value="20" aria-label="Fill opacity">
+                    </label>
+                </div>
+                <div class="whiteboard-style-control whiteboard-style-select compact-select">
+                    <select id="whiteboard-line-type" class="glass-select" aria-label="Line pattern">
+                        <option value="full" selected>Solid line</option>
+                        <option value="striped">Striped line</option>
+                        <option value="dotted">Dotted line</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Marker Popup -->
     <div id="marker-popup" class="marker-popup hidden">
@@ -203,7 +214,38 @@
         let currentSettings = getTheaterSettings(currentTheater);
         const tileSize = 256;
         let dragPanInteraction = null;
+        let isWhiteboardToolbarVisible = false;
         window.getCurrentScale = () => currentSettings.scale;
+        const controlWrapper = document.getElementById('control-wrapper');
+        const toolbarToggle = document.getElementById('control-toggle');
+        const toggleIcon = document.getElementById('control-toggle-icon');
+        const toolbarOpenButton = document.getElementById('control-toggle-open');
+        const whiteboardToolbar = document.getElementById('whiteboard-toolbar');
+        const whiteboardToolbarToggleButton = document.getElementById('whiteboard-toolbar-toggle');
+
+        function showWhiteboardToolbar() {
+            if (!whiteboardToolbar) return;
+            whiteboardToolbar.classList.remove('hidden');
+            whiteboardToolbar.setAttribute('aria-hidden', 'false');
+            whiteboardToolbarToggleButton?.classList.add('active');
+            whiteboardToolbarToggleButton?.setAttribute('aria-expanded', 'true');
+            isWhiteboardToolbarVisible = true;
+        }
+
+        function hideWhiteboardToolbar() {
+            if (!whiteboardToolbar) return;
+            whiteboardToolbar.classList.add('hidden');
+            whiteboardToolbar.setAttribute('aria-hidden', 'true');
+            whiteboardToolbarToggleButton?.classList.remove('active');
+            whiteboardToolbarToggleButton?.setAttribute('aria-expanded', 'false');
+            isWhiteboardToolbarVisible = false;
+        }
+
+        window.showWhiteboardToolbar = showWhiteboardToolbar;
+        window.hideWhiteboardToolbar = hideWhiteboardToolbar;
+        window.isWhiteboardToolbarOpen = () => isWhiteboardToolbarVisible;
+
+        hideWhiteboardToolbar();
 
         const mousePositionControl = new ol.control.MousePosition({
             coordinateFormat: coord => `X: ${coord[0].toFixed(0)}, Y: ${coord[1].toFixed(0)}`,
@@ -239,6 +281,8 @@
                 whiteboardDrawInteraction = null;
                 whiteboardEnabled = false;
             }
+
+            hideWhiteboardToolbar();
 
             // Reset active UI buttons
             document.querySelectorAll('#control-bar .button').forEach(btn => btn.classList.remove('active'));
@@ -375,6 +419,14 @@
             if (!wasActive) enableBullseyeMode(map);
         });
 
+        whiteboardToolbarToggleButton?.addEventListener('click', () => {
+            const shouldShow = !isWhiteboardToolbarVisible;
+            deactivateAllTools();
+            if (shouldShow) {
+                showWhiteboardToolbar();
+            }
+        });
+
         // Clear loaded mission
         document.getElementById('clear-button').addEventListener('click', () => {
             if (flightPathLayer) {
@@ -417,13 +469,6 @@
         document.addEventListener('touchmove', e => {
             if (isRulerActive) e.preventDefault();
         }, { passive: false });
-
-        // Toggle control panel
-        const toolbarToggle = document.getElementById('control-toggle');
-        const controlWrapper = document.getElementById('control-wrapper');
-        const toggleIcon = document.getElementById('control-toggle-icon');
-        const toolbarOpenButton = document.getElementById('control-toggle-open');
-
         function positionToolbarPopup(popupEl, triggerEl, options = {}) {
             if (!popupEl || !controlWrapper) return;
             const offsetX = options.offsetX ?? 16;

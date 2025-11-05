@@ -59,6 +59,7 @@ function initWhiteboard(map) {
             btn.onclick = () => {
                 const isAlreadyActive = btn.classList.contains('active');
                 window.deactivateAllTools(map);
+                window.showWhiteboardToolbar?.();
                 if (isAlreadyActive) {
                     disableWhiteboardDrawing(map);
                     whiteboardEnabled = false;
@@ -166,24 +167,28 @@ function updateStyleIndicators() {
     whiteboardStyleOptions = normalizeStyleOptions(whiteboardStyleOptions);
     const snapshot = whiteboardStyleOptions;
 
-    const widthValue = document.getElementById('whiteboard-line-width-value');
-    if (widthValue) {
-        widthValue.textContent = `${snapshot.lineWidth}px`;
-    }
-
-    const opacityValue = document.getElementById('whiteboard-fill-opacity-value');
-    if (opacityValue) {
-        opacityValue.textContent = `${Math.round(snapshot.fillOpacity * 100)}%`;
-    }
-
     const strokeColorInput = document.getElementById('whiteboard-stroke-color');
     if (strokeColorInput) {
         strokeColorInput.value = snapshot.strokeColor;
     }
 
+    const strokeSwatch = document.querySelector('.whiteboard-color-swatch[data-role="stroke"]');
+    if (strokeSwatch) {
+        const strokePreview = hexToRgba(snapshot.strokeColor, 1);
+        strokeSwatch.style.background = strokePreview;
+        strokeSwatch.style.borderColor = 'rgba(15, 23, 42, 0.25)';
+    }
+
     const fillColorInput = document.getElementById('whiteboard-fill-color');
+    const fillPreview = hexToRgba(snapshot.fillColor, snapshot.fillOpacity);
     if (fillColorInput) {
         fillColorInput.value = snapshot.fillColor;
+    }
+
+    const fillSwatch = document.querySelector('.whiteboard-color-swatch[data-role="fill"]');
+    if (fillSwatch) {
+        fillSwatch.style.background = fillPreview;
+        fillSwatch.style.borderColor = 'rgba(15, 23, 42, 0.25)';
     }
 
     const lineWidthInput = document.getElementById('whiteboard-line-width');
@@ -273,7 +278,7 @@ function enableWhiteboardDrawing(map) {
         disableWhiteboardDrawing(map);
         whiteboardEnabled = false;
 
-        document.querySelectorAll('#control-bar .button').forEach(btn => {
+        document.querySelectorAll('#control-bar .button:not(#whiteboard-toolbar-toggle), #whiteboard-toolbar .button').forEach(btn => {
             btn.classList.remove('active');
         });
     });
@@ -424,7 +429,7 @@ function normalizeStyleOptions(options) {
 }
 
 function setActiveButton(activeBtn) {
-    document.querySelectorAll('#control-bar .button').forEach(btn => {
+    document.querySelectorAll('#control-bar .button:not(#whiteboard-toolbar-toggle), #whiteboard-toolbar .button').forEach(btn => {
         btn.classList.remove('active');
     });
     activeBtn.classList.add('active');
