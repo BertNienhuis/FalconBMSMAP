@@ -221,7 +221,9 @@
             if (isMarkerMode) {
                 isMarkerMode = false;
                 document.getElementById('marker-button').classList.remove('active');
-                document.getElementById('marker-popup').classList.add('hidden');
+                const markerPopup = document.getElementById('marker-popup');
+                markerPopup.classList.add('hidden');
+                markerPopup.style.visibility = '';
                 dragPanInteraction?.setActive(true);
                 map.getTargetElement().style.cursor = '';
             }
@@ -354,7 +356,13 @@
                 isMarkerMode = true;
                 const markerBtn = document.getElementById('marker-button');
                 markerBtn.classList.add('active');
-                document.getElementById('marker-popup').classList.remove('hidden');
+                const markerPopup = document.getElementById('marker-popup');
+                markerPopup.classList.remove('hidden');
+                markerPopup.style.visibility = 'hidden';
+                requestAnimationFrame(() => {
+                    positionToolbarPopup(markerPopup, markerBtn, { verticalAlign: 'trigger-middle' });
+                    markerPopup.style.visibility = '';
+                });
                 map.getTargetElement().style.cursor = 'crosshair';
                 //dragPanInteraction?.setActive(false);
             }
@@ -413,9 +421,42 @@
         // Toggle control panel
         const toolbarToggle = document.getElementById('control-toggle');
         const controlWrapper = document.getElementById('control-wrapper');
-        const controlBar = document.getElementById('control-bar');
         const toggleIcon = document.getElementById('control-toggle-icon');
         const toolbarOpenButton = document.getElementById('control-toggle-open');
+
+        function positionToolbarPopup(popupEl, triggerEl, options = {}) {
+            if (!popupEl || !controlWrapper) return;
+            const offsetX = options.offsetX ?? 16;
+            const offsetY = options.offsetY ?? 0;
+            const verticalAlign = options.verticalAlign ?? 'trigger-middle';
+            const margin = options.margin ?? 12;
+
+            const toolbarRect = controlWrapper.getBoundingClientRect();
+            const anchorRect = triggerEl ? triggerEl.getBoundingClientRect() : toolbarRect;
+            const popupRect = popupEl.getBoundingClientRect();
+
+            let top;
+            switch (verticalAlign) {
+                case 'toolbar-top':
+                    top = toolbarRect.top;
+                    break;
+                case 'trigger-top':
+                    top = anchorRect.top;
+                    break;
+                default:
+                    top = anchorRect.top + (anchorRect.height / 2) - (popupRect.height / 2);
+            }
+            top += offsetY;
+            top = Math.max(margin, Math.min(window.innerHeight - popupRect.height - margin, top));
+
+            const left = toolbarRect.right + offsetX;
+
+            popupEl.style.position = 'fixed';
+            popupEl.style.top = `${top}px`;
+            popupEl.style.left = `${left}px`;
+        }
+
+        window.positionToolbarPopup = positionToolbarPopup;
 
         function updateToolbarState(collapsed) {
             if (!controlWrapper || !toolbarToggle || !toggleIcon) return;
@@ -431,11 +472,16 @@
             }
             if (collapsed) {
                 deactivateAllTools();
+                const exportPopup = document.getElementById('export-popup');
+                if (exportPopup) {
+                    exportPopup.classList.add('hidden');
+                    exportPopup.style.visibility = '';
+                }
             }
         }
 
         toolbarToggle?.addEventListener('click', () => {
-            const collapsed = controlBar?.classList.contains('collapsed') ?? false;
+            const collapsed = controlWrapper?.classList.contains('collapsed') ?? false;
             updateToolbarState(!collapsed);
         });
 
@@ -445,8 +491,19 @@
 
         // Allow ESC to hide toolbar
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && !controlBar.classList.contains('collapsed')) {
+            if (event.key === 'Escape' && !(controlWrapper?.classList.contains('collapsed'))) {
                 updateToolbarState(true);
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            const markerPopup = document.getElementById('marker-popup');
+            if (markerPopup && !markerPopup.classList.contains('hidden')) {
+                positionToolbarPopup(markerPopup, document.getElementById('marker-button'), { verticalAlign: 'trigger-middle' });
+            }
+            const exportPopup = document.getElementById('export-popup');
+            if (exportPopup && !exportPopup.classList.contains('hidden')) {
+                positionToolbarPopup(exportPopup, document.getElementById('export-layers'), { verticalAlign: 'trigger-middle' });
             }
         });
 

@@ -129,12 +129,21 @@
 
         //exportButton.addEventListener('click', exportLayers);
         exportButton.addEventListener('click', () => {
-            document.getElementById('export-popup').classList.remove('hidden');
+            const popup = document.getElementById('export-popup');
+            if (!popup) return;
+            popup.classList.remove('hidden');
+            popup.style.visibility = 'hidden';
+            requestAnimationFrame(() => {
+                window.positionToolbarPopup?.(popup, exportButton, { verticalAlign: 'trigger-middle' });
+                popup.style.visibility = '';
+            });
         });
         
 
         document.getElementById('cancel-export')?.addEventListener('click', () => {
-            document.getElementById('export-popup').classList.add('hidden');
+            const popup = document.getElementById('export-popup');
+            popup?.classList.add('hidden');
+            if (popup) popup.style.visibility = '';
         });
         
         document.getElementById('confirm-export')?.addEventListener('click', () => {
@@ -205,14 +214,18 @@
             const geojson = format.writeFeaturesObject(allFeatures);
             const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-        
+
             const a = document.createElement('a');
             a.href = url;
             a.download = 'bms-layers.json';
             a.click();
             URL.revokeObjectURL(url);
-        
-            document.getElementById('export-popup').style.display = 'none';
+
+            const popup = document.getElementById('export-popup');
+            if (popup) {
+                popup.classList.add('hidden');
+                popup.style.visibility = '';
+            }
         });
         
 

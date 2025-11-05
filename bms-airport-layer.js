@@ -146,29 +146,75 @@ function createAirportTooltip(map, airportLayer) {
         let found = false;
         map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
             if (layer === airportLayer) {
-                const name = feature.get('name');
-                const icao = feature.get('icao');
-                const type = feature.get('type');
-                const channel = feature.get('channel');
-                const band = feature.get('band');
+                const safe = value => {
+                    if (value === null || value === undefined || value === '' || value === 'N/A') {
+                        return '—';
+                    }
+                    return value;
+                };
+
+                const escapeHtml = (value) => String(value ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+
+                const name = escapeHtml(feature.get('name') ?? 'Unknown');
+                const icao = escapeHtml(feature.get('icao') ?? '');
+                const type = escapeHtml(feature.get('type') ?? '');
+                const channel = escapeHtml(safe(feature.get('channel')));
+                const band = escapeHtml(safe(feature.get('band')));
                 const freqs = feature.get('freqs') || {};
                 const ils = feature.get('ils') || [];
 
-                container.innerHTML = `
-                    <strong>${name}${icao ? ` (${icao})` : ''}</strong><br>
-                    <em>${type}</em><br><br>
-                    <strong>Tacan:</strong>${channel} ${band}<br><br>
-                    <strong>Frequencies:</strong>
-                    <div class="freq-grid">
-                    <div>Ground:</div><div>${freqs.ground}</div>
-                    <div>Tower UHF:</div><div>${freqs.uhf}</div>
-                    <div>Tower VHF:</div><div>${freqs.vhf}</div>
-                    <div>Approach:</div><div>${freqs.approach}</div>
-                    <div>Ops:</div><div>${freqs.ops}</div>
-                    <div>ATIS:</div><div>${freqs.atis}</div>
-                    </div>
+                const frequencyRows = [
+                    ['Ground', freqs.ground],
+                    ['Tower UHF', freqs.uhf],
+                    ['Tower VHF', freqs.vhf],
+                    ['Approach', freqs.approach],
+                    ['Ops', freqs.ops],
+                    ['ATIS', freqs.atis]
+                ].map(([label, value]) => `
+                    <span class="airport-card__grid-label">${label}</span>
+                    <span class="airport-card__grid-value">${escapeHtml(safe(value))}</span>
+                `).join('');
 
-                    ${ils.length ? `<br><strong>ILS:</strong><br>- ${ils.join('<br> - ')}` : ''}
+                const ilsMarkup = ils.length
+                    ? `<div class="airport-card__section">
+                            <div class="airport-card__section-title">ILS</div>
+                            <ul class="airport-card__list">
+                                ${ils.map(rwy => `<li>${escapeHtml(rwy)}</li>`).join('')}
+                            </ul>
+                        </div>`
+                    : '';
+
+                const tacanValue = [channel, band].filter(Boolean).join(' ');
+
+                container.innerHTML = `
+                    <div class="airport-card">
+                        <div class="airport-card__header">
+                            <div>
+                                <div class="airport-card__name">${name}</div>
+                                ${type ? `<div class="airport-card__type">${type}</div>` : ''}
+                            </div>
+                            ${icao ? `<div class="airport-card__icao">${icao}</div>` : ''}
+                        </div>
+
+                        <div class="airport-card__section">
+                            <div class="airport-card__label">TACAN</div>
+                            <div class="airport-card__value">${tacanValue || '—'}</div>
+                        </div>
+
+                        <div class="airport-card__section">
+                            <div class="airport-card__section-title">Frequencies</div>
+                            <div class="airport-card__grid">
+                                ${frequencyRows}
+                            </div>
+                        </div>
+
+                        ${ilsMarkup}
+                    </div>
                 `;
                 const pixel = map.getPixelFromCoordinate(evt.coordinate);
                 const mapSize = map.getSize(); // [width, height]

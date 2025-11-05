@@ -22,10 +22,11 @@ body {
     left: 24px;
     z-index: 1000;
     transition: transform 0.35s ease, opacity 0.3s ease;
+    max-height: calc(100vh - 40px);
 }
 
 #control-wrapper.collapsed {
-    transform: translateX(-180px) scale(0.95);
+    transform: translateX(calc(-100% - 24px)) scale(0.95);
     opacity: 0;
     pointer-events: none;
 }
@@ -45,6 +46,7 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     width: 140px;
+    max-height: 100%;
 }
 
 #control-toggle {
@@ -130,6 +132,82 @@ body {
 /* When collapsed, move toggle button left too */
 #control-wrapper.collapsed #control-toggle {
     transform: translateY(-1px);
+}
+
+
+@media (max-width: 1024px) {
+    #control-wrapper {
+        top: 16px;
+        left: 16px;
+        max-height: calc(100vh - 32px);
+    }
+
+    #control-bar {
+        width: min(240px, calc(100vw - 32px));
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .button,
+    .whiteboard-button,
+    .map-select,
+    #airport-search,
+    .file-upload-label,
+    .glass-select,
+    .marker-select {
+        width: 100%;
+    }
+
+    .whiteboard-draw-group {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .whiteboard-edit-group {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    #control-toggle {
+        top: -16px;
+        right: -16px;
+    }
+
+    #control-toggle-open {
+        top: 16px;
+        left: 16px;
+    }
+}
+
+@media (max-width: 640px) {
+    #control-wrapper {
+        top: 12px;
+        left: 12px;
+    }
+
+    #control-bar {
+        width: min(220px, calc(100vw - 24px));
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .whiteboard-button {
+        padding: 6px 4px;
+    }
+
+    .whiteboard-style-group {
+        padding: 4px;
+    }
+
+    #control-toggle {
+        top: -14px;
+        right: -14px;
+    }
+
+    #control-toggle-open {
+        top: 12px;
+        left: 12px;
+    }
 }
 
 
@@ -529,9 +607,9 @@ canvas {
 
 /* Marker Popup Container */
 .marker-popup {
-    position: absolute;
-    top: 60px;
-    left: 174px;
+    position: fixed;
+    top: 0;
+    left: 0;
     background: rgba(255, 255, 255, 0.3);
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
     backdrop-filter: blur(18px);
@@ -544,6 +622,8 @@ canvas {
     flex-direction: column;
     gap: 10px;
     width: 190px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
 }
 
 .hidden {
@@ -585,9 +665,9 @@ canvas {
 
 /* Marker Popup Container */
 .export-popup {
-    position: absolute;
-    top: 489px;
-    left: 170px;
+    position: fixed;
+    top: 0;
+    left: 0;
     background: rgba(255, 255, 255, 0.3);
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
     backdrop-filter: blur(18px);
@@ -600,6 +680,8 @@ canvas {
     flex-direction: column;
     gap: 10px;
     width: 190px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
 }
 
 .export-button-row {
@@ -616,28 +698,122 @@ canvas {
 
 
 .airport-tooltip {
-    position: relative;
-    background: white;
-    border: 1px solid #ccc;
-    margin: 4px;
-    padding: 6px 10px;
-    border-radius: 5px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     pointer-events: none;
+    font-family: 'Segoe UI', sans-serif;
     font-size: 13px;
-    z-index: 1000;
-    min-width: 150px;
-    max-width: 300px;
-    line-height: 1.4;
-    font-family: sans-serif;
+    z-index: 1100;
 }
 
-.freq-grid {
+.airport-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.65));
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+    border-radius: 12px;
+    padding: 14px 16px;
+    min-width: 220px;
+    max-width: 320px;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    color: #0f172a;
+    line-height: 1.45;
+}
+
+.airport-card__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.airport-card__name {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.airport-card__type {
+    font-size: 12px;
+    color: rgba(15, 23, 42, 0.65);
+    margin-top: 2px;
+}
+
+.airport-card__icao {
+    align-self: flex-start;
+    font-size: 12px;
+    font-weight: 600;
+    color: #2563eb;
+    background: rgba(37, 99, 235, 0.12);
+    border-radius: 999px;
+    padding: 4px 8px;
+}
+
+.airport-card__section {
+    margin-bottom: 12px;
+}
+
+.airport-card__label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(15, 23, 42, 0.6);
+    margin-bottom: 2px;
+}
+
+.airport-card__value {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.airport-card__section-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(15, 23, 42, 0.6);
+    margin-bottom: 6px;
+}
+
+.airport-card__grid {
     display: grid;
-    grid-template-columns: auto auto;
-    gap: 2px 10px;
-    font-size: 13px;
-    margin: 6px 0 10px;
+    grid-template-columns: auto 1fr;
+    gap: 4px 14px;
+}
+
+.airport-card__grid-label {
+    font-size: 12px;
+    color: rgba(15, 23, 42, 0.65);
+}
+
+.airport-card__grid-value {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.airport-card__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+}
+
+.airport-card__list li {
+    position: relative;
+    padding-left: 14px;
+    color: #0f172a;
+}
+
+.airport-card__list li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 8px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #2563eb;
 }
 
 
