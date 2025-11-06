@@ -148,7 +148,7 @@ body {
     gap: 12px;
     max-width: calc(100vw - 48px);
     flex-wrap: nowrap;
-    width: 640px;
+    width: 550px;
 }
 
 
