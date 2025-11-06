@@ -41,6 +41,16 @@ function initWhiteboard(map) {
         const feature = event.feature;
         const options = getFeatureStyleOptions(feature);
         feature.set('whiteboardStyle', options);
+        if (!feature.get('whiteboardShape')) {
+            if (feature.get('whiteboardText')) {
+                feature.set('whiteboardShape', 'text');
+            } else {
+                const geomType = feature.getGeometry()?.getType()?.toLowerCase();
+                if (geomType) {
+                    feature.set('whiteboardShape', geomType);
+                }
+            }
+        }
         feature.setStyle(buildDrawingStyles(options, feature, false));
     });
 
@@ -50,7 +60,8 @@ function initWhiteboard(map) {
         'whiteboard-pencil': 'Freehand',
         'whiteboard-rect': 'Rectangle',
         'whiteboard-polygon': 'Polygon',
-        'whiteboard-circle': 'Circle'
+        'whiteboard-circle': 'Circle',
+        'whiteboard-text': 'Text'
     };
 
     for (const [id, type] of Object.entries(tools)) {
@@ -95,18 +106,6 @@ function setupWhiteboardStyleControls() {
             whiteboardStyleOptions = normalizeStyleOptions({
                 ...whiteboardStyleOptions,
                 strokeColor: event.target.value
-            });
-            refreshActiveDrawStyle();
-        };
-    }
-
-    const fillColorInput = document.getElementById('whiteboard-fill-color');
-    if (fillColorInput) {
-        fillColorInput.value = whiteboardStyleOptions.fillColor;
-        fillColorInput.oninput = (event) => {
-            whiteboardStyleOptions = normalizeStyleOptions({
-                ...whiteboardStyleOptions,
-                fillColor: event.target.value
             });
             refreshActiveDrawStyle();
         };
@@ -179,18 +178,6 @@ function updateStyleIndicators() {
         strokeSwatch.style.borderColor = 'rgba(15, 23, 42, 0.25)';
     }
 
-    const fillColorInput = document.getElementById('whiteboard-fill-color');
-    const fillPreview = hexToRgba(snapshot.fillColor, snapshot.fillOpacity);
-    if (fillColorInput) {
-        fillColorInput.value = snapshot.fillColor;
-    }
-
-    const fillSwatch = document.querySelector('.whiteboard-color-swatch[data-role="fill"]');
-    if (fillSwatch) {
-        fillSwatch.style.background = fillPreview;
-        fillSwatch.style.borderColor = 'rgba(15, 23, 42, 0.25)';
-    }
-
     const lineWidthInput = document.getElementById('whiteboard-line-width');
     if (lineWidthInput) {
         lineWidthInput.value = String(snapshot.lineWidth);
@@ -251,6 +238,9 @@ function enableWhiteboardDrawing(map) {
         case 'Polygon':
             drawType = 'Polygon';
             break;
+        case 'Text':
+            drawType = 'Point';
+            break;
     }
 
     if ((currentDrawType === 'Circle' || currentDrawType === 'Rectangle') && 'ontouchstart' in window) {
@@ -269,11 +259,27 @@ function enableWhiteboardDrawing(map) {
 
     whiteboardDrawInteraction.on('drawend', (event) => {
         const feature = event.feature;
-        const styleOptions = getCurrentStyleSnapshot();
-        feature.set('whiteboardStyle', styleOptions);
-        feature.setStyle(buildDrawingStyles(styleOptions, feature, false));
-        undoStack.push(feature);
-        redoStack.length = 0;
+        let cancelled = false;
+        let styleOptions = getCurrentStyleSnapshot();
+
+        if (currentDrawType === 'Text') {
+            const userInput = window.prompt('Enter text label for the map:', '');
+            const textValue = userInput ? userInput.trim() : '';
+            if (!textValue) {
+                whiteboardSource?.removeFeature(feature);
+                cancelled = true;
+            } else {
+                feature.set('whiteboardText', textValue);
+            }
+        }
+
+        if (!cancelled) {
+            feature.set('whiteboardShape', currentDrawType.toLowerCase());
+            feature.set('whiteboardStyle', styleOptions);
+            feature.setStyle(buildDrawingStyles(styleOptions, feature, false));
+            undoStack.push(feature);
+            redoStack.length = 0;
+        }
 
         disableWhiteboardDrawing(map);
         whiteboardEnabled = false;
@@ -300,13 +306,22 @@ function sketchStyleFunction(feature) {
 
 function buildDrawingStyles(styleOptions, feature, includeHandle) {
     const normalized = normalizeStyleOptions(styleOptions);
-    const styles = [createShapeStyle(normalized)];
-    if (!includeHandle) {
-        return styles;
+    const geometry = feature.getGeometry();
+    const isTextFeature = Boolean(feature.get('whiteboardText'));
+
+    const styles = [];
+    if (isTextFeature && geometry) {
+        const textStyle = createTextStyle(normalized, feature);
+        if (textStyle) styles.push(textStyle);
+    } else {
+        styles.push(createShapeStyle(normalized));
     }
-    const handle = createHandleStyle(feature);
-    if (handle) {
-        styles.push(handle);
+
+    if (includeHandle && !isTextFeature) {
+        const handle = createHandleStyle(feature);
+        if (handle) {
+            styles.push(handle);
+        }
     }
     return styles;
 }
@@ -325,6 +340,29 @@ function createShapeStyle(options) {
         stroke,
         fill: new ol.style.Fill({
             color: fillColor
+        })
+    });
+}
+
+function createTextStyle(options, feature) {
+    const textValue = feature.get('whiteboardText');
+    if (!textValue) return null;
+
+    const fontSize = Math.round(16 + options.lineWidth * 2);
+    const textColor = hexToRgba(options.strokeColor, 1);
+    return new ol.style.Style({
+        text: new ol.style.Text({
+            text: textValue,
+            font: `600 ${fontSize}px 'Segoe UI', sans-serif`,
+            fill: new ol.style.Fill({ color: textColor }),
+            stroke: new ol.style.Stroke({
+                color: 'rgba(15, 23, 42, 0.6)',
+                width: Math.max(1.5, options.lineWidth / 1.5)
+            }),
+            padding: [0, 0, 0, 0],
+            textAlign: 'center',
+            textBaseline: 'middle',
+            overflow: true
         })
     });
 }
@@ -405,7 +443,6 @@ function isHexColor(value) {
 function normalizeStyleOptions(options) {
     const base = {
         strokeColor: defaultWhiteboardStyle.strokeColor,
-        fillColor: defaultWhiteboardStyle.fillColor,
         fillOpacity: defaultWhiteboardStyle.fillOpacity,
         lineWidth: defaultWhiteboardStyle.lineWidth,
         lineType: defaultWhiteboardStyle.lineType
@@ -415,15 +452,12 @@ function normalizeStyleOptions(options) {
         if (isHexColor(options.strokeColor)) {
             base.strokeColor = options.strokeColor;
         }
-        if (isHexColor(options.fillColor)) {
-            base.fillColor = options.fillColor;
-        } else {
-            base.fillColor = base.strokeColor;
-        }
         base.fillOpacity = clamp(options.fillOpacity, 0, 1, defaultWhiteboardStyle.fillOpacity);
         base.lineWidth = clamp(options.lineWidth, 1, 20, defaultWhiteboardStyle.lineWidth);
         base.lineType = VALID_LINE_TYPES.includes(options.lineType) ? options.lineType : defaultWhiteboardStyle.lineType;
     }
+
+    base.fillColor = base.strokeColor;
 
     return base;
 }

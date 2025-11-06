@@ -100,6 +100,11 @@
                             <span class="whiteboard-button-label">Rectangle</span>
                             <span class="whiteboard-button-hint">R</span>
                         </button>
+                        <button id="whiteboard-text" class="button whiteboard-button" title="Text (T)">
+                            <i data-lucide="type"></i>
+                            <span class="whiteboard-button-label">Text</span>
+                            <span class="whiteboard-button-hint">T</span>
+                        </button>
                     </div>
                     <div class="whiteboard-edit-group" role="group" aria-label="Whiteboard actions">
                         <button id="whiteboard-undo" class="button whiteboard-button" title="Undo (Z)">
@@ -112,9 +117,10 @@
                             <span class="whiteboard-button-label">Redo</span>
                             <span class="whiteboard-button-hint">Y</span>
                         </button>
-                        <button id="whiteboard-eraser" class="button whiteboard-button" title="Clear whiteboard">
+                        <button id="whiteboard-eraser" class="button whiteboard-button" title="Clear whiteboard (C)">
                             <i data-lucide="eraser"></i>
                             <span class="whiteboard-button-label">Clean</span>
+                            <span class="whiteboard-button-hint">C</span>
                         </button>
                     </div>
                 </div>
@@ -124,13 +130,6 @@
                         <span class="whiteboard-color-picker">
                             <span class="whiteboard-color-swatch" data-role="stroke"></span>
                             <input type="color" id="whiteboard-stroke-color" value="#ff0000" aria-label="Line color">
-                        </span>
-                    </label>
-                    <label class="whiteboard-style-control whiteboard-style-color" data-role="fill">
-                        <span class="whiteboard-style-text">Fill</span>
-                        <span class="whiteboard-color-picker">
-                            <span class="whiteboard-color-swatch" data-role="fill"></span>
-                            <input type="color" id="whiteboard-fill-color" value="#ff0000" aria-label="Fill color">
                         </span>
                     </label>
                 </div>
@@ -477,16 +476,17 @@
         document.addEventListener('keydown', e => {
             if (/input|textarea/i.test(e.target.tagName)) return;
 
-            const shortcuts = {
-                q: 'whiteboard-pencil',
-                w: 'whiteboard-polygon',
-                e: 'whiteboard-circle',
-                r: 'whiteboard-rect',
-                t: 'whiteboard-eraser',
-                l: 'ruler-button',
-                z: 'whiteboard-undo',
-                y: 'whiteboard-redo'
-            };
+                const shortcuts = {
+                    q: 'whiteboard-pencil',
+                    w: 'whiteboard-polygon',
+                    e: 'whiteboard-circle',
+                    r: 'whiteboard-rect',
+                    t: 'whiteboard-text',
+                    c: 'whiteboard-eraser',
+                    l: 'ruler-button',
+                    z: 'whiteboard-undo',
+                    y: 'whiteboard-redo'
+                };
 
             const id = shortcuts[e.key.toLowerCase()];
             if (id) document.getElementById(id)?.click();
