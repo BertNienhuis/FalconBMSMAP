@@ -196,10 +196,10 @@ body {
 
 #mouse-position {
     position: absolute;
-    top: 10px;
-    bottom: auto !important;
-    left: auto !important;
-    right: 10px;
+    top: auto;
+    bottom: 10px;
+    left: 10px;
+    right: auto;
     color: #333;
     z-index: 9998;
 }
