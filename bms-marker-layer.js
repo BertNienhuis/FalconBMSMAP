@@ -116,6 +116,15 @@ function updateMarkerPreview() {
     }
 }
 
+function refreshIdentitySelectionStyles() {
+    document.querySelectorAll('#marker-identity-options label').forEach(label => {
+        const input = label.querySelector('input[name="marker-identity"]');
+        if (input) {
+            label.classList.toggle('selected', input.checked);
+        }
+    });
+}
+
 function updateIdentityOptions() {
     const domain = document.getElementById('marker-domain')?.value;
     const type = document.getElementById('marker-type')?.value;
@@ -127,16 +136,17 @@ function updateIdentityOptions() {
     const identities = ['friend', 'hostile', 'neutral', 'unknown'];
     const sanitizedType = type.toLowerCase().replace(/\s+/g, '_');
 
-    container.innerHTML = '<legend><strong>Select Identity</strong>:</legend>';
+    container.innerHTML = '';
+
+    const optionsRow = document.createElement('div');
+    optionsRow.className = 'marker-identity-row';
+    container.appendChild(optionsRow);
 
     identities.forEach(identity => {
         const fileName = `${sanitizedType}_${identity}.svg`;
         const imageUrl = `milspec_icons/${fileName}`;
 
         const label = document.createElement('label');
-        label.style.display = 'flex';
-        label.style.alignItems = 'center';
-        label.style.marginBottom = '4px';
 
         const input = document.createElement('input');
         input.type = 'radio';
@@ -150,14 +160,11 @@ function updateIdentityOptions() {
         const img = document.createElement('img');
         img.src = imageUrl;
         img.alt = identity;
-        img.style.width = '24px';
-        img.style.height = '24px';
-        img.style.margin = '0 6px';
 
         label.appendChild(input);
         label.appendChild(img);
         label.appendChild(document.createTextNode(identity.charAt(0).toUpperCase() + identity.slice(1)));
-        container.appendChild(label);
+        optionsRow.appendChild(label);
     });
 
     const selectedRadio = container.querySelector('input[name="marker-identity"]:checked');
@@ -166,10 +173,14 @@ function updateIdentityOptions() {
     }
 
     container.querySelectorAll('input[name="marker-identity"]').forEach(radio => {
-        radio.addEventListener('change', updateMarkerPreview);
+        radio.addEventListener('change', () => {
+            updateMarkerPreview();
+            refreshIdentitySelectionStyles();
+        });
     });
 
     updateMarkerPreview();
+    refreshIdentitySelectionStyles();
 }
 
 function getMarkerStyle(feature) {

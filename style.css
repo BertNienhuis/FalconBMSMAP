@@ -648,22 +648,25 @@ canvas {
 /* Marker Popup Container */
 .marker-popup {
     position: fixed;
-    top: 0;
-    left: 0;
-    background: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    padding: 10px;
-    z-index: 1000;
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 190px;
-    max-height: calc(100vh - 32px);
-    overflow-y: auto;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 950;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    align-items: start;
+    row-gap: 16px;
+    column-gap: 20px;
+    padding: 10px 12px;
+    width: 560px;
+    max-width: calc(100vw - 48px);
+    background: linear-gradient(140deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.2));
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 16px;
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.22);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    overflow: visible;
 }
 
 .hidden {
@@ -674,31 +677,92 @@ canvas {
 /* Each row with label + select */
 .marker-row {
     display: flex;
-    justify-content: space-between;
+    flex-direction: row;
     align-items: center;
+    gap: 8px;
 }
 
 /* Uniform label width */
 .marker-row label {
-    width: 70px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(15, 23, 42, 0.7);
+    padding-left: 2px;
 }
 
 /* Select box styling */
 .marker-row select {
-    flex: 1;
-    max-width: none;
+    width: 100%;
+    min-height: 34px;
 }
 
 /* Identity fieldset */
 #marker-identity-options {
-    margin-top: 10px;
-    border: 1px solid #ccc;
-    padding: 8px;
+    grid-column: 1 / -1;
+    position: relative;
+    margin: 0;
+    padding: 6px 8px 8px;
+    border: 0px solid ;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.24);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
-/* Identity legend */
-#marker-identity-options legend {
-    font-weight: bold;
+.marker-identity-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+#marker-identity-options label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(15, 23, 42, 0.78);
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    user-select: none;
+}
+
+#marker-identity-options label:hover {
+    background: rgba(255, 255, 255, 0.55);
+    border-color: rgba(255, 255, 255, 0.65);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+#marker-identity-options label.selected {
+    background: rgba(37, 99, 235, 0.18);
+    border-color: rgba(37, 99, 235, 0.4);
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.2);
+}
+
+#marker-identity-options input[type="radio"] {
+    accent-color: #2563eb;
+}
+
+#marker-identity-options label img {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+}
+
+@media (max-width: 720px) {
+    .marker-popup {
+        width: calc(100vw - 32px);
+        grid-template-columns: 1fr;
+        padding: 14px 16px;
+    }
 }
 
 
@@ -907,7 +971,7 @@ canvas {
     display: none;
 }
 
-.hidden-for-whiteboard { display: none !important; }
+.hidden-for-overlay { display: none !important; }
 .map-select {
     width: 136px;
 }
@@ -944,15 +1008,15 @@ canvas {
 
 
 
-#whiteboard-toolbar-close {
+.floating-close {
     position: absolute;
     top: -12px;
     right: -12px;
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.34));
     border: 1px solid rgba(255, 255, 255, 0.55);
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.34));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -960,19 +1024,22 @@ canvas {
     cursor: pointer;
     box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    padding: 0;
 }
 
-#whiteboard-toolbar-close:hover {
+.floating-close:hover {
     transform: translateY(-1px);
     box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
 }
 
-#whiteboard-toolbar-close:active {
+.floating-close:active {
     transform: translateY(0);
     box-shadow: 0 6px 14px rgba(15, 23, 42, 0.2);
 }
 
-#whiteboard-toolbar-close i {
+.floating-close i {
     width: 16px;
     height: 16px;
 }

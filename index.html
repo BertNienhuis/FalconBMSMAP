@@ -73,7 +73,7 @@
     </button>
 
     <div id="whiteboard-toolbar" class="whiteboard-toolbar hidden" aria-label="Whiteboard tools" aria-hidden="true">
-        <button id="whiteboard-toolbar-close" class="whiteboard-toolbar-close" title="Close whiteboard tools" aria-label="Close whiteboard toolbar">
+        <button id="whiteboard-toolbar-close" class="floating-close" title="Close whiteboard tools" aria-label="Close whiteboard toolbar">
             <i data-lucide="x"></i>
         </button>
         <div class="whiteboard-toolset">
@@ -162,7 +162,10 @@
     </div>
 
     <!-- Marker Popup -->
-    <div id="marker-popup" class="marker-popup hidden">
+    <div id="marker-popup" class="marker-popup hidden" aria-hidden="true" role="dialog" aria-label="Marker tools">
+        <button id="marker-popup-close" class="floating-close" title="Close marker tools" aria-label="Close marker tools">
+            <i data-lucide="x"></i>
+        </button>
         <div class="marker-row">
             <label for="marker-domain">Domain:</label>
             <select id="marker-domain" class="glass-select marker-select">
@@ -226,14 +229,12 @@
         const whiteboardToolbar = document.getElementById('whiteboard-toolbar');
         const whiteboardToolbarToggleButton = document.getElementById('whiteboard-toolbar-toggle');
         const whiteboardToolbarCloseButton = document.getElementById('whiteboard-toolbar-close');
+        const markerPopupCloseButton = document.getElementById('marker-popup-close');
 
-        function adjustControlBarForWhiteboard() {
+        function adjustControlPanelForOverlays() {
             if (!controlWrapper) return;
-            if (window.innerWidth <= 1070 && isWhiteboardToolbarVisible) {
-                controlWrapper.classList.add('hidden-for-whiteboard');
-            } else {
-                controlWrapper.classList.remove('hidden-for-whiteboard');
-            }
+            const shouldHide = window.innerWidth <= 1070 && (isWhiteboardToolbarVisible || isMarkerMode);
+            controlWrapper.classList.toggle('hidden-for-overlay', shouldHide);
         }
 
         function showWhiteboardToolbar() {
@@ -243,7 +244,7 @@
             whiteboardToolbarToggleButton?.classList.add('active');
             whiteboardToolbarToggleButton?.setAttribute('aria-expanded', 'true');
             isWhiteboardToolbarVisible = true;
-            adjustControlBarForWhiteboard();
+            adjustControlPanelForOverlays();
         }
 
         function hideWhiteboardToolbar() {
@@ -253,7 +254,7 @@
             whiteboardToolbarToggleButton?.classList.remove('active');
             whiteboardToolbarToggleButton?.setAttribute('aria-expanded', 'false');
             isWhiteboardToolbarVisible = false;
-            adjustControlBarForWhiteboard();
+            adjustControlPanelForOverlays();
         }
 
         window.showWhiteboardToolbar = showWhiteboardToolbar;
@@ -279,8 +280,10 @@
                 isMarkerMode = false;
                 document.getElementById('marker-button').classList.remove('active');
                 const markerPopup = document.getElementById('marker-popup');
-                markerPopup.classList.add('hidden');
-                markerPopup.style.visibility = '';
+                if (markerPopup) {
+                    markerPopup.classList.add('hidden');
+                    markerPopup.setAttribute('aria-hidden', 'true');
+                }
                 dragPanInteraction?.setActive(true);
                 map.getTargetElement().style.cursor = '';
             }
@@ -301,6 +304,7 @@
 
             // Reset active UI buttons
             document.querySelectorAll('#control-bar .button').forEach(btn => btn.classList.remove('active'));
+            adjustControlPanelForOverlays();
         }
 
 
@@ -416,14 +420,13 @@
                 const markerBtn = document.getElementById('marker-button');
                 markerBtn.classList.add('active');
                 const markerPopup = document.getElementById('marker-popup');
-                markerPopup.classList.remove('hidden');
-                markerPopup.style.visibility = 'hidden';
-                requestAnimationFrame(() => {
-                    positionToolbarPopup(markerPopup, markerBtn, { verticalAlign: 'trigger-middle' });
-                    markerPopup.style.visibility = '';
-                });
+                if (markerPopup) {
+                    markerPopup.classList.remove('hidden');
+                    markerPopup.setAttribute('aria-hidden', 'false');
+                }
                 map.getTargetElement().style.cursor = 'crosshair';
                 //dragPanInteraction?.setActive(false);
+                adjustControlPanelForOverlays();
             }
         });
 
@@ -443,6 +446,10 @@
         });
 
         whiteboardToolbarCloseButton?.addEventListener('click', () => {
+            deactivateAllTools();
+        });
+
+        markerPopupCloseButton?.addEventListener('click', () => {
             deactivateAllTools();
         });
 
@@ -561,15 +568,11 @@
         });
 
         window.addEventListener('resize', () => {
-            const markerPopup = document.getElementById('marker-popup');
-            if (markerPopup && !markerPopup.classList.contains('hidden')) {
-                positionToolbarPopup(markerPopup, document.getElementById('marker-button'), { verticalAlign: 'trigger-middle' });
-            }
             const exportPopup = document.getElementById('export-popup');
             if (exportPopup && !exportPopup.classList.contains('hidden')) {
                 positionToolbarPopup(exportPopup, document.getElementById('export-layers'), { verticalAlign: 'trigger-middle' });
             }
-            adjustControlBarForWhiteboard();
+            adjustControlPanelForOverlays();
         });
 
 
