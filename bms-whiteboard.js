@@ -348,7 +348,7 @@ function createTextStyle(options, feature) {
     const textValue = feature.get('whiteboardText');
     if (!textValue) return null;
 
-    const fontSize = Math.round(16 + options.lineWidth * 2);
+    const fontSize = 14;
     const textColor = hexToRgba(options.strokeColor, 1);
     return new ol.style.Style({
         text: new ol.style.Text({
@@ -356,8 +356,8 @@ function createTextStyle(options, feature) {
             font: `600 ${fontSize}px 'Segoe UI', sans-serif`,
             fill: new ol.style.Fill({ color: textColor }),
             stroke: new ol.style.Stroke({
-                color: 'rgba(15, 23, 42, 0.6)',
-                width: Math.max(1.5, options.lineWidth / 1.5)
+                color: 'rgba(255, 255, 255, 0.95)',
+                width: 2.2
             }),
             padding: [0, 0, 0, 0],
             textAlign: 'center',
