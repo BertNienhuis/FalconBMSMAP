@@ -298,6 +298,7 @@
                 map.removeInteraction(whiteboardDrawInteraction);
                 whiteboardDrawInteraction = null;
                 whiteboardEnabled = false;
+                dragPanInteraction?.setActive(true);
             }
 
             hideWhiteboardToolbar();
