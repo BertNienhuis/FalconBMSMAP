@@ -73,6 +73,9 @@
     </button>
 
     <div id="whiteboard-toolbar" class="whiteboard-toolbar hidden" aria-label="Whiteboard tools" aria-hidden="true">
+        <button id="whiteboard-toolbar-close" class="whiteboard-toolbar-close" title="Close whiteboard tools" aria-label="Close whiteboard toolbar">
+            <i data-lucide="x"></i>
+        </button>
         <div class="whiteboard-toolset">
             <div class="whiteboard-toolbar-row">
                 <div class="whiteboard-button-groups">
@@ -222,6 +225,7 @@
         const toolbarOpenButton = document.getElementById('control-toggle-open');
         const whiteboardToolbar = document.getElementById('whiteboard-toolbar');
         const whiteboardToolbarToggleButton = document.getElementById('whiteboard-toolbar-toggle');
+        const whiteboardToolbarCloseButton = document.getElementById('whiteboard-toolbar-close');
 
         function showWhiteboardToolbar() {
             if (!whiteboardToolbar) return;
@@ -425,6 +429,10 @@
             if (shouldShow) {
                 showWhiteboardToolbar();
             }
+        });
+
+        whiteboardToolbarCloseButton?.addEventListener('click', () => {
+            deactivateAllTools();
         });
 
         // Clear loaded mission

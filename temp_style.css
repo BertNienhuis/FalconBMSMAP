@@ -131,7 +131,7 @@ body {
 
 #whiteboard-toolbar {
     position: fixed;
-    top: 20px;
+    top: 16px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -158,6 +158,40 @@ body {
 
 #whiteboard-toolbar .button {
     margin-bottom: 0;
+}
+
+.whiteboard-toolbar-close {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.34));
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0f172a;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2);
+    backdrop-filter: blur(14px);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.whiteboard-toolbar-close:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+}
+
+.whiteboard-toolbar-close:active {
+    transform: translateY(0);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.2);
+}
+
+.whiteboard-toolbar-close i {
+    width: 16px;
+    height: 16px;
 }
 
 
@@ -942,7 +976,7 @@ canvas {
 
 
 
-#whiteboard-toolbar-close {
+.whiteboard-toolbar-close {
     position: absolute;
     top: -12px;
     right: -12px;
@@ -960,18 +994,19 @@ canvas {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-#whiteboard-toolbar-close:hover {
+.whiteboard-toolbar-close:hover {
     transform: translateY(-1px);
     box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
 }
 
-#whiteboard-toolbar-close:active {
+.whiteboard-toolbar-close:active {
     transform: translateY(0);
     box-shadow: 0 6px 14px rgba(15, 23, 42, 0.2);
 }
 
-#whiteboard-toolbar-close i {
+.whiteboard-toolbar-close i {
     width: 16px;
     height: 16px;
 }
+
 
