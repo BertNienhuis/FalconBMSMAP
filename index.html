@@ -227,6 +227,15 @@
         const whiteboardToolbarToggleButton = document.getElementById('whiteboard-toolbar-toggle');
         const whiteboardToolbarCloseButton = document.getElementById('whiteboard-toolbar-close');
 
+        function adjustControlBarForWhiteboard() {
+            if (!controlWrapper) return;
+            if (window.innerWidth <= 1070 && isWhiteboardToolbarVisible) {
+                controlWrapper.classList.add('hidden-for-whiteboard');
+            } else {
+                controlWrapper.classList.remove('hidden-for-whiteboard');
+            }
+        }
+
         function showWhiteboardToolbar() {
             if (!whiteboardToolbar) return;
             whiteboardToolbar.classList.remove('hidden');
@@ -234,6 +243,7 @@
             whiteboardToolbarToggleButton?.classList.add('active');
             whiteboardToolbarToggleButton?.setAttribute('aria-expanded', 'true');
             isWhiteboardToolbarVisible = true;
+            adjustControlBarForWhiteboard();
         }
 
         function hideWhiteboardToolbar() {
@@ -243,6 +253,7 @@
             whiteboardToolbarToggleButton?.classList.remove('active');
             whiteboardToolbarToggleButton?.setAttribute('aria-expanded', 'false');
             isWhiteboardToolbarVisible = false;
+            adjustControlBarForWhiteboard();
         }
 
         window.showWhiteboardToolbar = showWhiteboardToolbar;
@@ -558,6 +569,7 @@
             if (exportPopup && !exportPopup.classList.contains('hidden')) {
                 positionToolbarPopup(exportPopup, document.getElementById('export-layers'), { verticalAlign: 'trigger-middle' });
             }
+            adjustControlBarForWhiteboard();
         });
 
 

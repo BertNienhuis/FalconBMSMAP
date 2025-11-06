@@ -906,6 +906,8 @@ canvas {
 .hidden {
     display: none;
 }
+
+.hidden-for-whiteboard { display: none !important; }
 .map-select {
     width: 136px;
 }
@@ -974,4 +976,5 @@ canvas {
     width: 16px;
     height: 16px;
 }
+
 
