@@ -495,6 +495,21 @@
         document.addEventListener('touchmove', e => {
             if (isRulerActive) e.preventDefault();
         }, { passive: false });
+
+        // Prevent double-tap zoom on UI controls while keeping map zoom intact
+        let lastUITapTime = 0;
+        document.addEventListener('touchend', event => {
+            if (event.target.closest('#map')) {
+                lastUITapTime = 0;
+                return;
+            }
+            const currentTime = Date.now();
+            if (currentTime - lastUITapTime < 350) {
+                event.preventDefault();
+            }
+            lastUITapTime = currentTime;
+        }, { passive: false });
+
         function positionToolbarPopup(popupEl, triggerEl, options = {}) {
             if (!popupEl || !controlWrapper) return;
             const offsetX = options.offsetX ?? 16;
