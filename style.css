@@ -222,10 +222,11 @@ body {
 .pdf-viewer {
     position: fixed;
     top: 20px;
+    bottom: 20px;
     left: 50%;
     transform: translate(-50%, -20px);
-    width: min(960px, calc(100vw - 48px));
-    height: min(700px, calc(100vh - 60px));
+    width: min(1109px, calc(100vw - 80px));
+    max-width: calc(100vw - 40px);
     padding: 18px 20px 20px;
     border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.38);

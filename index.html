@@ -271,7 +271,8 @@
 
         function adjustControlPanelForOverlays() {
             if (!controlWrapper) return;
-            const shouldHide = window.innerWidth <= 1070 && (isWhiteboardToolbarVisible || isMarkerMode || isPdfViewerVisible);
+            const overlayActive = isWhiteboardToolbarVisible || isMarkerMode || isPdfViewerVisible;
+            const shouldHide = (window.innerWidth <= 1070 && overlayActive) || isPdfViewerVisible;
             controlWrapper.classList.toggle('hidden-for-overlay', shouldHide);
         }
 
