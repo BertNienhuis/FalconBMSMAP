@@ -20,6 +20,16 @@ const VALID_LINE_TYPES = ['full', 'striped', 'dotted'];
 
 let whiteboardStyleOptions = { ...defaultWhiteboardStyle };
 
+function setWhiteboardCursor(map, isActive) {
+    if (!map) return;
+    const target = typeof map.getTargetElement === 'function' ? map.getTargetElement() : null;
+    const viewport = typeof map.getViewport === 'function' ? map.getViewport() : null;
+    [target, viewport].forEach(element => {
+        if (!element) return;
+        element.classList.toggle('whiteboard-crosshair', Boolean(isActive));
+    });
+}
+
 function initWhiteboard(map) {
     if (whiteboardDrawInteraction) {
         map.removeInteraction(whiteboardDrawInteraction);
@@ -248,6 +258,7 @@ function enableWhiteboardDrawing(map) {
     }
 
     whiteboardDragPan?.setActive(false);
+    setWhiteboardCursor(map, true);
 
     whiteboardDrawInteraction = new ol.interaction.Draw({
         source: whiteboardSource,
@@ -298,6 +309,7 @@ function disableWhiteboardDrawing(map) {
         whiteboardDrawInteraction = null;
     }
     whiteboardDragPan?.setActive(true);
+    setWhiteboardCursor(map, false);
 }
 
 function sketchStyleFunction(feature) {

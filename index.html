@@ -72,7 +72,7 @@
         <i data-lucide="panel-left-open"></i>
     </button>
 
-    <div id="whiteboard-toolbar" class="whiteboard-toolbar hidden" aria-label="Whiteboard tools" aria-hidden="true">
+    <div id="whiteboard-toolbar" class="whiteboard-toolbar overlay-panel" aria-label="Whiteboard tools" aria-hidden="true">
         <button id="whiteboard-toolbar-close" class="floating-toggle floating-toggle--close" title="Close whiteboard tools" aria-label="Close whiteboard toolbar">
             <i data-lucide="x"></i>
         </button>
@@ -158,7 +158,7 @@
     </div>
 
     <!-- Marker Popup -->
-    <div id="marker-popup" class="marker-popup hidden" aria-hidden="true" role="dialog" aria-label="Marker tools">
+    <div id="marker-popup" class="marker-popup overlay-panel" aria-hidden="true" role="dialog" aria-label="Marker tools">
         <button id="marker-popup-close" class="floating-toggle floating-toggle--close" title="Close marker tools" aria-label="Close marker tools">
             <i data-lucide="x"></i>
         </button>
@@ -235,7 +235,7 @@
 
         function showWhiteboardToolbar() {
             if (!whiteboardToolbar) return;
-            whiteboardToolbar.classList.remove('hidden');
+            whiteboardToolbar.classList.add('is-visible');
             whiteboardToolbar.setAttribute('aria-hidden', 'false');
             whiteboardToolbarToggleButton?.classList.add('active');
             whiteboardToolbarToggleButton?.setAttribute('aria-expanded', 'true');
@@ -245,7 +245,7 @@
 
         function hideWhiteboardToolbar() {
             if (!whiteboardToolbar) return;
-            whiteboardToolbar.classList.add('hidden');
+            whiteboardToolbar.classList.remove('is-visible');
             whiteboardToolbar.setAttribute('aria-hidden', 'true');
             whiteboardToolbarToggleButton?.classList.remove('active');
             whiteboardToolbarToggleButton?.setAttribute('aria-expanded', 'false');
@@ -277,7 +277,7 @@
                 document.getElementById('marker-button').classList.remove('active');
                 const markerPopup = document.getElementById('marker-popup');
                 if (markerPopup) {
-                    markerPopup.classList.add('hidden');
+                    markerPopup.classList.remove('is-visible');
                     markerPopup.setAttribute('aria-hidden', 'true');
                 }
                 dragPanInteraction?.setActive(true);
@@ -418,7 +418,7 @@
                 markerBtn.classList.add('active');
                 const markerPopup = document.getElementById('marker-popup');
                 if (markerPopup) {
-                    markerPopup.classList.remove('hidden');
+                    markerPopup.classList.add('is-visible');
                     markerPopup.setAttribute('aria-hidden', 'false');
                 }
                 map.getTargetElement().style.cursor = 'crosshair';

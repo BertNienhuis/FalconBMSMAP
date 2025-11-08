@@ -14,6 +14,23 @@ body {
     bottom: 0;
 }
 
+.overlay-panel {
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.35s ease, opacity 0.3s ease;
+    will-change: transform, opacity;
+}
+
+.overlay-panel.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.whiteboard-crosshair,
+.whiteboard-crosshair * {
+    cursor: crosshair !important;
+}
+
 
 
 #control-wrapper {
@@ -129,7 +146,7 @@ body {
     position: fixed;
     top: 20px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -20px);
     display: flex;
     z-index: 950;
     align-items: center;
@@ -147,9 +164,8 @@ body {
     width: 550px;
 }
 
-
-#whiteboard-toolbar.hidden {
-    display: none;
+#whiteboard-toolbar.is-visible {
+    transform: translate(-50%, 0);
 }
 
 #whiteboard-toolbar .button {
@@ -637,7 +653,7 @@ canvas {
     position: fixed;
     top: 20px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -20px);
     z-index: 950;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -654,6 +670,10 @@ canvas {
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(18px);
     overflow: visible;
+}
+
+.marker-popup.is-visible {
+    transform: translate(-50%, 0);
 }
 
 .hidden {
