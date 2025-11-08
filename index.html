@@ -51,6 +51,9 @@
             </button>
             <button id="whiteboard-toolbar-toggle" class="button" title="Whiteboard tools" aria-controls="whiteboard-toolbar" aria-expanded="false"><i data-lucide="pen-tool"></i> Whiteboard
             </button>
+            <button id="pdf-viewer-toggle" class="button" title="Open PDF viewer" aria-controls="pdf-viewer-overlay" aria-expanded="false">
+                <i data-lucide="file-text"></i> PDF Viewer
+            </button>
         </div>
 
         <div class="tool-group">
@@ -157,6 +160,24 @@
         </div>
     </div>
 
+    <!-- PDF Viewer -->
+    <div id="pdf-viewer-overlay" class="pdf-viewer overlay-panel" aria-hidden="true" role="dialog" aria-label="PDF viewer overlay">
+        <button id="pdf-viewer-close" class="floating-toggle floating-toggle--close" title="Close PDF viewer" aria-label="Close PDF viewer">
+            <i data-lucide="x"></i>
+        </button>
+        <div class="pdf-viewer-controls">
+            <label class="button" title="Upload PDF file">
+                <i data-lucide="upload-cloud"></i> Upload PDF
+                <input type="file" id="pdf-file-input" accept="application/pdf" style="display: none;">
+            </label>
+            <input id="pdf-url-input" class="glass-input pdf-url-input" type="text" placeholder="Paste PDF URL..." aria-label="PDF URL">
+            <button id="pdf-load-button" class="button" title="Load PDF from URL">
+                <i data-lucide="link-2"></i> Load URL
+            </button>
+        </div>
+        <iframe id="pdf-viewer-frame" title="PDF preview" aria-label="PDF content preview"></iframe>
+    </div>
+
     <!-- Marker Popup -->
     <div id="marker-popup" class="marker-popup overlay-panel" aria-hidden="true" role="dialog" aria-label="Marker tools">
         <button id="marker-popup-close" class="floating-toggle floating-toggle--close" title="Close marker tools" aria-label="Close marker tools">
@@ -217,6 +238,8 @@
         const tileSize = 256;
         let dragPanInteraction = null;
         let isWhiteboardToolbarVisible = false;
+        let isPdfViewerVisible = false;
+        let activePdfObjectUrl = null;
         window.getCurrentScale = () => currentSettings.scale;
         const controlWrapper = document.getElementById('control-wrapper');
         const toolbarToggle = document.getElementById('control-toggle');
@@ -226,10 +249,17 @@
         const whiteboardToolbarToggleButton = document.getElementById('whiteboard-toolbar-toggle');
         const whiteboardToolbarCloseButton = document.getElementById('whiteboard-toolbar-close');
         const markerPopupCloseButton = document.getElementById('marker-popup-close');
+        const pdfViewerOverlay = document.getElementById('pdf-viewer-overlay');
+        const pdfViewerToggleButton = document.getElementById('pdf-viewer-toggle');
+        const pdfViewerCloseButton = document.getElementById('pdf-viewer-close');
+        const pdfViewerFrame = document.getElementById('pdf-viewer-frame');
+        const pdfFileInput = document.getElementById('pdf-file-input');
+        const pdfUrlInput = document.getElementById('pdf-url-input');
+        const pdfLoadButton = document.getElementById('pdf-load-button');
 
         function adjustControlPanelForOverlays() {
             if (!controlWrapper) return;
-            const shouldHide = window.innerWidth <= 1070 && (isWhiteboardToolbarVisible || isMarkerMode);
+            const shouldHide = window.innerWidth <= 1070 && (isWhiteboardToolbarVisible || isMarkerMode || isPdfViewerVisible);
             controlWrapper.classList.toggle('hidden-for-overlay', shouldHide);
         }
 
@@ -251,6 +281,46 @@
             whiteboardToolbarToggleButton?.setAttribute('aria-expanded', 'false');
             isWhiteboardToolbarVisible = false;
             adjustControlPanelForOverlays();
+        }
+
+        function showPdfViewer() {
+            if (!pdfViewerOverlay) return;
+            pdfViewerOverlay.classList.add('is-visible');
+            pdfViewerOverlay.setAttribute('aria-hidden', 'false');
+            pdfViewerToggleButton?.classList.add('active');
+            pdfViewerToggleButton?.setAttribute('aria-expanded', 'true');
+            isPdfViewerVisible = true;
+            adjustControlPanelForOverlays();
+        }
+
+        function hidePdfViewer() {
+            if (!pdfViewerOverlay) return;
+            pdfViewerOverlay.classList.remove('is-visible');
+            pdfViewerOverlay.setAttribute('aria-hidden', 'true');
+            pdfViewerToggleButton?.classList.remove('active');
+            pdfViewerToggleButton?.setAttribute('aria-expanded', 'false');
+            isPdfViewerVisible = false;
+            adjustControlPanelForOverlays();
+        }
+
+        function clearPdfObjectUrl() {
+            if (activePdfObjectUrl) {
+                URL.revokeObjectURL(activePdfObjectUrl);
+                activePdfObjectUrl = null;
+            }
+        }
+
+        function setPdfViewerSource(source) {
+            if (!pdfViewerFrame) return;
+            pdfViewerFrame.src = source || '';
+        }
+
+        function loadPdfFromUrl() {
+            const url = pdfUrlInput?.value.trim();
+            if (!url) return;
+            clearPdfObjectUrl();
+            setPdfViewerSource(url);
+            showPdfViewer();
         }
 
         window.showWhiteboardToolbar = showWhiteboardToolbar;
@@ -298,6 +368,7 @@
             }
 
             hideWhiteboardToolbar();
+            hidePdfViewer();
 
             // Reset active UI buttons
             document.querySelectorAll('#control-bar .button').forEach(btn => btn.classList.remove('active'));
@@ -448,6 +519,41 @@
 
         markerPopupCloseButton?.addEventListener('click', () => {
             deactivateAllTools();
+        });
+
+        pdfViewerToggleButton?.addEventListener('click', () => {
+            const shouldShow = !isPdfViewerVisible;
+            deactivateAllTools();
+            if (shouldShow) {
+                showPdfViewer();
+            }
+        });
+
+        pdfViewerCloseButton?.addEventListener('click', () => {
+            hidePdfViewer();
+        });
+
+        pdfLoadButton?.addEventListener('click', loadPdfFromUrl);
+
+        pdfUrlInput?.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                loadPdfFromUrl();
+            }
+        });
+
+        pdfFileInput?.addEventListener('change', event => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            clearPdfObjectUrl();
+            activePdfObjectUrl = URL.createObjectURL(file);
+            setPdfViewerSource(activePdfObjectUrl);
+            showPdfViewer();
+            event.target.value = '';
+        });
+
+        window.addEventListener('beforeunload', () => {
+            clearPdfObjectUrl();
         });
 
         // Clear loaded mission
