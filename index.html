@@ -175,7 +175,11 @@
                 <i data-lucide="link-2"></i> Load URL
             </button>
         </div>
-        <iframe id="pdf-viewer-frame" title="PDF preview" aria-label="PDF content preview"></iframe>
+        <div id="pdf-viewer-stage" class="pdf-viewer-stage" role="document" aria-label="PDF content area">
+            <div class="pdf-viewer-empty-state">
+                <p>Load a PDF from your device or paste a URL to view it here.</p>
+            </div>
+        </div>
     </div>
 
     <!-- Marker Popup -->
@@ -240,6 +244,7 @@
         let isWhiteboardToolbarVisible = false;
         let isPdfViewerVisible = false;
         let activePdfObjectUrl = null;
+        let pdfViewerInstance = null;
         window.getCurrentScale = () => currentSettings.scale;
         const controlWrapper = document.getElementById('control-wrapper');
         const toolbarToggle = document.getElementById('control-toggle');
@@ -249,10 +254,17 @@
         const whiteboardToolbarToggleButton = document.getElementById('whiteboard-toolbar-toggle');
         const whiteboardToolbarCloseButton = document.getElementById('whiteboard-toolbar-close');
         const markerPopupCloseButton = document.getElementById('marker-popup-close');
+        const embedPdfModulePromise = import('https://snippet.embedpdf.com/embedpdf.js')
+            .then(mod => mod?.default ?? mod)
+            .catch(error => {
+                console.error('Failed to load EmbedPDF', error);
+                return null;
+            });
+
         const pdfViewerOverlay = document.getElementById('pdf-viewer-overlay');
         const pdfViewerToggleButton = document.getElementById('pdf-viewer-toggle');
         const pdfViewerCloseButton = document.getElementById('pdf-viewer-close');
-        const pdfViewerFrame = document.getElementById('pdf-viewer-frame');
+        const pdfViewerStage = document.getElementById('pdf-viewer-stage');
         const pdfFileInput = document.getElementById('pdf-file-input');
         const pdfUrlInput = document.getElementById('pdf-url-input');
         const pdfLoadButton = document.getElementById('pdf-load-button');
@@ -310,9 +322,43 @@
             }
         }
 
+        function resetPdfViewerStage() {
+            if (!pdfViewerStage) return;
+            pdfViewerInstance?.destroy?.();
+            pdfViewerInstance = null;
+            pdfViewerStage.innerHTML = `
+                <div class="pdf-viewer-empty-state">
+                    <p>Load a PDF from your device or paste a URL to view it here.</p>
+                </div>
+            `;
+        }
+
+        async function renderPdfViewer(source) {
+            if (!pdfViewerStage) return;
+            try {
+                const EmbedPDF = await embedPdfModulePromise;
+                if (!EmbedPDF) return;
+                if (pdfViewerInstance && typeof pdfViewerInstance.destroy === 'function') {
+                    pdfViewerInstance.destroy();
+                }
+                pdfViewerStage.innerHTML = '';
+                pdfViewerInstance = EmbedPDF.init({
+                    type: 'container',
+                    target: pdfViewerStage,
+                    src: source
+                });
+            } catch (error) {
+                console.error('Failed to render PDF', error);
+                resetPdfViewerStage();
+            }
+        }
+
         function setPdfViewerSource(source) {
-            if (!pdfViewerFrame) return;
-            pdfViewerFrame.src = source || '';
+            if (!source) {
+                resetPdfViewerStage();
+                return;
+            }
+            renderPdfViewer(source);
         }
 
         function loadPdfFromUrl() {
