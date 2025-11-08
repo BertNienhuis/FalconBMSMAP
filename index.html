@@ -64,16 +64,16 @@
                 </button>
             </div>
         </div>
-        <button id="control-toggle" class="glass-toggle tool-close" title="Hide toolbar" aria-expanded="true" aria-controls="control-bar">
-            <i id="control-toggle-icon" data-lucide="x"></i>
+        <button id="control-toggle" class="floating-toggle floating-toggle--close" title="Hide toolbar" aria-expanded="true" aria-controls="control-bar">
+            <i id="control-toggle-icon" class="floating-toggle-icon " data-lucide="x"></i>
         </button>
     </div>
-    <button id="control-toggle-open" class="glass-toggle tool-open" title="Show toolbar" aria-controls="control-bar" aria-expanded="false">
+    <button id="control-toggle-open" class="floating-toggle floating-toggle--open" title="Show toolbar" aria-controls="control-bar" aria-expanded="false">
         <i data-lucide="panel-left-open"></i>
     </button>
 
     <div id="whiteboard-toolbar" class="whiteboard-toolbar hidden" aria-label="Whiteboard tools" aria-hidden="true">
-        <button id="whiteboard-toolbar-close" class="floating-close" title="Close whiteboard tools" aria-label="Close whiteboard toolbar">
+        <button id="whiteboard-toolbar-close" class="floating-toggle floating-toggle--close" title="Close whiteboard tools" aria-label="Close whiteboard toolbar">
             <i data-lucide="x"></i>
         </button>
         <div class="whiteboard-toolset">
@@ -159,7 +159,7 @@
 
     <!-- Marker Popup -->
     <div id="marker-popup" class="marker-popup hidden" aria-hidden="true" role="dialog" aria-label="Marker tools">
-        <button id="marker-popup-close" class="floating-close" title="Close marker tools" aria-label="Close marker tools">
+        <button id="marker-popup-close" class="floating-toggle floating-toggle--close" title="Close marker tools" aria-label="Close marker tools">
             <i data-lucide="x"></i>
         </button>
         <div class="marker-row">

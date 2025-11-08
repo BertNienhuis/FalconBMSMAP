@@ -49,81 +49,77 @@ body {
     max-height: 100%;
 }
 
-#control-toggle {
-    position: absolute;
-    top: -12px;
-    right: -12px;
-    width: 30px;
-    height: 30px;
-    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.34));
-    border: 1px solid rgba(255, 255, 255, 0.55);
-    border-radius: 50%;
-    cursor: pointer;
-    z-index: 1001;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+.floating-toggle {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.34));
     color: #0f172a;
+    cursor: pointer;
     box-shadow: 0 8px 18px rgba(15, 23, 42, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
+    padding: 0;
+    z-index: 1001;
 }
 
-#control-toggle:hover {
+.floating-toggle:hover {
     transform: translateY(-1px);
     box-shadow: 0 10px 20px rgba(15, 23, 42, 0.24);
 }
 
-#control-toggle:active {
+.floating-toggle:active {
     transform: translateY(0);
     box-shadow: 0 6px 14px rgba(15, 23, 42, 0.2);
 }
 
-#control-toggle i {
+.floating-toggle i {
     width: 16px;
     height: 16px;
 }
 
-#control-toggle-open {
+.floating-toggle--close {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+}
+
+.floating-toggle--open {
     position: absolute;
     top: 20px;
     left: 24px;
     width: 36px;
     height: 36px;
-    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.32));
     border: 1px solid rgba(255, 255, 255, 0.5);
-    border-radius: 50%;
-    cursor: pointer;
-    z-index: 900;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #0f172a;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.32));
     box-shadow: 0 6px 16px rgba(15, 23, 42, 0.18);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    z-index: 900;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-#control-toggle-open i {
+.floating-toggle--open i {
     width: 18px;
     height: 18px;
 }
 
-#control-toggle-open.visible {
+.floating-toggle--open.visible {
     opacity: 1;
     pointer-events: auto;
 }
 
-#control-toggle-open.visible:hover {
+.floating-toggle--open.visible:hover {
     transform: translateY(-1px);
     box-shadow: 0 10px 20px rgba(15, 23, 42, 0.24);
 }
 
-#control-toggle-open.visible:active {
+.floating-toggle--open.visible:active {
     transform: translateY(0);
     box-shadow: 0 6px 14px rgba(15, 23, 42, 0.2);
 }
@@ -997,42 +993,5 @@ canvas {
 
 
 
-
-
-.floating-close {
-    position: absolute;
-    top: -12px;
-    right: -12px;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.55);
-    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.34));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #0f172a;
-    cursor: pointer;
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    padding: 0;
-}
-
-.floating-close:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
-}
-
-.floating-close:active {
-    transform: translateY(0);
-    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.2);
-}
-
-.floating-close i {
-    width: 16px;
-    height: 16px;
-}
 
 
