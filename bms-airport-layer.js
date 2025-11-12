@@ -1,7 +1,8 @@
 const airportLayer = new ol.layer.Vector({
     source: new ol.source.Vector(),
     visible: true,
-    declutter: true
+    declutter: true,
+    zIndex: 60
 });
 
 let airportOverlay;

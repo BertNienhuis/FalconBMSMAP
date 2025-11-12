@@ -764,6 +764,50 @@ canvas {
     transform: translate(-50%, 0);
 }
 
+.weather-panel {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translate(-50%, -20px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    z-index: 950;
+    width: 460px;
+    max-width: calc(100vw - 48px);
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 14px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.22);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.weather-panel.is-visible {
+    transform: translate(-50%, 0);
+}
+
+.weather-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.weather-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.weather-section-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(248, 250, 252, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
 .hidden {
     display: none !important;
 }
@@ -1079,6 +1123,92 @@ canvas {
 #control-wrapper .map-select,
 #control-wrapper #airport-search {
     max-width: 100%;
+}
+
+.weather-panel .button {
+    width: 100%;
+}
+
+.weather-action-row {
+    display: flex;
+    gap: 10px;
+    flex-direction: row;
+}
+
+.weather-toggle-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 12px;
+    margin: 8px 0;
+}
+
+.weather-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #0f172a;
+}
+
+.weather-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #38bdf8;
+}
+
+.weather-wind-select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #0f172a;
+    margin-bottom: 8px;
+}
+
+.weather-wind-select select {
+    flex: 1;
+    border-radius: 6px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(255, 255, 255, 0.85);
+    color: #0f172a;
+    padding: 4px 8px;
+    min-height: 34px;
+}
+
+.weather-status {
+    font-size: 0.8rem;
+    color: #0f172a;
+}
+
+.weather-status.is-error {
+    color: #dc2626;
+}
+
+.weather-debug-popup {
+    position: absolute;
+    min-width: 220px;
+    max-width: 280px;
+    padding: 10px 12px;
+    background: rgba(15, 23, 42, 0.78);
+    color: #f8fafc;
+    font-size: 12px;
+    line-height: 1.4;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.35);
+    pointer-events: none;
+    display: none;
+}
+
+.weather-debug-popup.is-visible {
+    display: block;
+}
+
+.weather-debug-popup strong {
+    display: inline-block;
+    width: 90px;
+    color: #bfdbfe;
 }
 
 

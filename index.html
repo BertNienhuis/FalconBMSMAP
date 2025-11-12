@@ -55,6 +55,9 @@
             <button id="marker-button" class="button" title="Add marker"><i data-lucide="map-pin"></i> Marker</button>
             <button id="bullseye-button" class="button" title="Move Bullseye"><i data-lucide="crosshair"></i> Bullseye
             </button>
+            <button id="weather-button" class="button" title="Weather tools" aria-controls="weather-panel" aria-expanded="false">
+                <i data-lucide="cloudy"></i> Weather
+            </button>
             <button id="whiteboard-toolbar-toggle" class="button" title="Whiteboard tools" aria-controls="whiteboard-toolbar" aria-expanded="false"><i data-lucide="pen-tool"></i> Whiteboard
             </button>
             <button id="pdf-viewer-toggle" class="button" title="Open PDF viewer" aria-controls="pdf-viewer-overlay" aria-expanded="false">
@@ -230,6 +233,67 @@
         </div>
     </div>
 
+    <div id="weather-panel" class="weather-panel overlay-panel" aria-hidden="true" role="dialog" aria-label="Weather tools">
+        <button id="weather-panel-close" class="floating-toggle floating-toggle--close" title="Close weather tools" aria-label="Close weather tools">
+            <i data-lucide="x"></i>
+        </button>
+        <div class="weather-panel-content">
+            <div class="weather-section weather-action-row">
+                <label class="button file-upload-label" title="Import Falcon .FMAP weather">
+                    <i data-lucide="cloud-upload"></i> Import weather
+                    <input type="file" id="weather-loader" accept=".fmap" style="display: none;">
+                </label>
+                <button id="weather-clear" class="button" type="button" title="Remove imported weather" disabled>
+                    <i data-lucide="cloud-off"></i> Clear weather
+                </button>
+            </div>
+            <div class="weather-section">
+                <div class="weather-toggle-list" role="group" aria-label="Weather overlays">
+                    <label class="weather-toggle">
+                        <input type="checkbox" id="weather-toggle-temp" disabled>
+                        <span>Temperature</span>
+                    </label>
+                    <label class="weather-toggle">
+                        <input type="checkbox" id="weather-toggle-wind" disabled>
+                        <span>Wind direction</span>
+                    </label>
+                    <label class="weather-toggle">
+                        <input type="checkbox" id="weather-toggle-clouds" disabled>
+                        <span>Clouds</span>
+                    </label>
+                    <label class="weather-toggle">
+                        <input type="checkbox" id="weather-toggle-type" disabled>
+                        <span>Weather type</span>
+                    </label>
+                </div>
+            </div>
+            <div class="weather-section">
+                <label class="weather-toggle">
+                    <input type="checkbox" id="weather-toggle-debug" disabled>
+                    <span>Show debug data</span>
+                </label>
+            </div>
+            <div class="weather-section">
+                <label class="weather-wind-select">
+                    <span>Wind layer</span>
+                    <select id="weather-wind-altitude" disabled>
+                    <option value="0">Surface</option>
+                    <option value="1">3 kft</option>
+                    <option value="2">6 kft</option>
+                    <option value="3">9 kft</option>
+                    <option value="4">12 kft</option>
+                    <option value="5">18 kft</option>
+                    <option value="6">24 kft</option>
+                    <option value="7">30 kft</option>
+                    <option value="8">40 kft</option>
+                    <option value="9">50 kft</option>
+                </select>
+            </label>
+            </div>
+            <div id="weather-status" class="weather-status" aria-live="polite">No weather imported</div>
+        </div>
+    </div>
+
 
 
     <!-- Scripts -->
@@ -240,6 +304,7 @@
     <script src="bms-marker-layer.js"></script>
     <script src="bms-bullseye.js"></script>
     <script src="bms-export-import.js"></script>
+    <script src="bms-weather-layer.js"></script>
 
 
     <script>
@@ -250,9 +315,11 @@
         let dragPanInteraction = null;
         let isWhiteboardToolbarVisible = false;
         let isPdfViewerVisible = false;
+        let isWeatherPanelVisible = false;
         let activePdfObjectUrl = null;
         let pdfViewerInstance = null;
         window.getCurrentScale = () => currentSettings.scale;
+        window.getCurrentTheaterSettings = () => currentSettings;
         const controlWrapper = document.getElementById('control-wrapper');
         const toolbarToggle = document.getElementById('control-toggle');
         const toggleIcon = document.getElementById('control-toggle-icon');
@@ -261,6 +328,9 @@
         const whiteboardToolbarToggleButton = document.getElementById('whiteboard-toolbar-toggle');
         const whiteboardToolbarCloseButton = document.getElementById('whiteboard-toolbar-close');
         const markerPopupCloseButton = document.getElementById('marker-popup-close');
+        const weatherPanel = document.getElementById('weather-panel');
+        const weatherButton = document.getElementById('weather-button');
+        const weatherPanelCloseButton = document.getElementById('weather-panel-close');
         const embedPdfModulePromise = import('https://snippet.embedpdf.com/embedpdf.js')
             .then(mod => mod?.default ?? mod)
             .catch(error => {
@@ -278,7 +348,7 @@
 
         function adjustControlPanelForOverlays() {
             if (!controlWrapper) return;
-            const overlayActive = isWhiteboardToolbarVisible || isMarkerMode || isPdfViewerVisible;
+            const overlayActive = isWhiteboardToolbarVisible || isMarkerMode || isPdfViewerVisible || isWeatherPanelVisible;
             const shouldHide = (window.innerWidth <= 1070 && overlayActive) || isPdfViewerVisible;
             controlWrapper.classList.toggle('hidden-for-overlay', shouldHide);
         }
@@ -328,6 +398,26 @@
                 URL.revokeObjectURL(activePdfObjectUrl);
                 activePdfObjectUrl = null;
             }
+        }
+
+        function showWeatherPanel() {
+            if (!weatherPanel) return;
+            weatherPanel.classList.add('is-visible');
+            weatherPanel.setAttribute('aria-hidden', 'false');
+            weatherButton?.classList.add('active');
+            weatherButton?.setAttribute('aria-expanded', 'true');
+            isWeatherPanelVisible = true;
+            adjustControlPanelForOverlays();
+        }
+
+        function hideWeatherPanel() {
+            if (!weatherPanel) return;
+            weatherPanel.classList.remove('is-visible');
+            weatherPanel.setAttribute('aria-hidden', 'true');
+            weatherButton?.classList.remove('active');
+            weatherButton?.setAttribute('aria-expanded', 'false');
+            isWeatherPanelVisible = false;
+            adjustControlPanelForOverlays();
         }
 
         function resetPdfViewerStage() {
@@ -423,6 +513,7 @@
 
             hideWhiteboardToolbar();
             hidePdfViewer();
+            hideWeatherPanel();
 
             // Reset active UI buttons
             document.querySelectorAll('#control-bar .button').forEach(btn => btn.classList.remove('active'));
@@ -513,6 +604,7 @@
 
             initWhiteboard(map);
             initMarkerTool(map);
+            initWeatherModule?.(map);
         }
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -576,6 +668,18 @@
 
         markerPopupCloseButton?.addEventListener('click', () => {
             deactivateAllTools();
+        });
+
+        weatherButton?.addEventListener('click', () => {
+            const shouldShow = !isWeatherPanelVisible;
+            deactivateAllTools();
+            if (shouldShow) {
+                showWeatherPanel();
+            }
+        });
+
+        weatherPanelCloseButton?.addEventListener('click', () => {
+            hideWeatherPanel();
         });
 
         pdfViewerToggleButton?.addEventListener('click', () => {
