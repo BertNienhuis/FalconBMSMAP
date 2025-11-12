@@ -218,6 +218,7 @@
         <div class="tool-group-header">Select layers to export</div>
         <div><label><input type="checkbox" id="export-whiteboard" checked> Whiteboard</label></div>
         <div><label><input type="checkbox" id="export-markers" checked> Markers</label></div>
+        <div><label><input type="checkbox" id="export-flightplan" checked> Flightplan</label></div>
         <div><label><input type="checkbox" id="export-bullseye" checked> Bullseye</label></div>
         <div class="export-button-row">
             <button id="confirm-export" class="button" title="Export layers">
@@ -488,6 +489,8 @@
                 })
             });
 
+            window.map = map;
+
             dragPanInteraction = map.getInteractions().getArray().find(i => i instanceof ol.interaction.DragPan);
 
             // Remove rotation
@@ -520,6 +523,7 @@
         // Event: Switch Theater
         document.getElementById('theater-select').addEventListener('change', e => {
             currentTheater = e.target.value;
+            window.clearFlightPlanData?.(map);
             map.setTarget(null);
             document.getElementById('map').innerHTML = '';
             initMap(currentTheater);
@@ -611,7 +615,9 @@
 
         // Clear loaded mission
         document.getElementById('clear-button').addEventListener('click', () => {
-            if (flightPathLayer) {
+            if (window.clearFlightPlanData) {
+                window.clearFlightPlanData(map);
+            } else if (flightPathLayer) {
                 map.removeLayer(flightPathLayer);
                 flightPathLayer = null;
             }

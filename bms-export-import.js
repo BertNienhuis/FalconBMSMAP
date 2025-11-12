@@ -87,6 +87,28 @@
                     window.markerSource.addFeature(f);
                     break;
 
+                case 'flightplan': {
+                    const flightSource = window.ensureFlightPlanLayer
+                        ? window.ensureFlightPlanLayer(window.map)
+                        : window.flightPlanSource;
+
+                    if (!flightSource) break;
+
+                    if (f.get('flightFeatureType') === 'threat-circle' &&
+                        f.get('originalShape') === 'circle' &&
+                        f.getGeometry() instanceof ol.geom.Point) {
+                        const center = f.getGeometry().getCoordinates();
+                        const radius = Number(f.get('radius'));
+                        if (center && !Number.isNaN(radius)) {
+                            f.setGeometry(new ol.geom.Circle(center, radius));
+                        }
+                    }
+
+                    window.applyFlightPlanFeatureStyle?.(f);
+                    flightSource.addFeature(f);
+                    break;
+                }
+
 
                 case 'bullseye-center':
                     if (window.setBullseyeCenter && f.getGeometry()) {
@@ -149,6 +171,7 @@
         document.getElementById('confirm-export')?.addEventListener('click', () => {
             const exportWhiteboard = document.getElementById('export-whiteboard')?.checked;
             const exportMarkers = document.getElementById('export-markers')?.checked;
+            const exportFlightplan = document.getElementById('export-flightplan')?.checked;
             const exportBullseye = document.getElementById('export-bullseye')?.checked;
         
             const format = new ol.format.GeoJSON();
@@ -201,6 +224,32 @@
                     return f;
                 });
                 allFeatures.push(...markerFeatures);
+            }
+
+            if (exportFlightplan && window.flightPlanSource) {
+                const flightplanFeatures = window.flightPlanSource.getFeatures().map(f => {
+                    const geometry = f.getGeometry();
+                    if (geometry instanceof ol.geom.Circle) {
+                        const circleAsPoint = new ol.Feature({
+                            geometry: new ol.geom.Point(geometry.getCenter())
+                        });
+                        const props = { ...f.getProperties() };
+                        delete props.geometry;
+                        circleAsPoint.setProperties({
+                            ...props,
+                            __layer: 'flightplan',
+                            originalShape: 'circle',
+                            radius: geometry.getRadius()
+                        });
+                        return circleAsPoint;
+                    }
+
+                    if (!f.get('__layer')) {
+                        f.set('__layer', 'flightplan');
+                    }
+                    return f;
+                });
+                allFeatures.push(...flightplanFeatures);
             }
         
             if (exportBullseye && window.currentBullseye) {

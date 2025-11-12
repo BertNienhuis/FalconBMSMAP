@@ -1,4 +1,131 @@
 let flightPathLayer = null;
+let flightPlanSource = null;
+
+function applyFlightPlanFeatureStyle(feature) {
+    if (!feature) return;
+    const type = feature.get('flightFeatureType');
+
+    switch (type) {
+        case 'route-line':
+            feature.setStyle(new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'white',
+                    width: 3
+                })
+            }));
+            break;
+        case 'waypoint-marker': {
+            const action = Number(feature.get('waypointAction'));
+            const index = feature.get('waypointIndex');
+            const isActionType14 = action === 14;
+
+            const shapeStyle = isActionType14
+                ? new ol.style.RegularShape({
+                    points: 3,
+                    radius: 8,
+                    rotation: 0,
+                    fill: new ol.style.Fill({ color: 'rgba(255, 255, 255, 0)' }),
+                    stroke: new ol.style.Stroke({ color: 'white', width: 2 })
+                })
+                : new ol.style.Circle({
+                    radius: 5,
+                    fill: new ol.style.Fill({ color: '#ffffff00' }),
+                    stroke: new ol.style.Stroke({ color: 'white', width: 2 })
+                });
+
+            feature.setStyle(new ol.style.Style({
+                image: shapeStyle,
+                text: new ol.style.Text({
+                    text: index ? `${index}` : '',
+                    offsetY: -15,
+                    font: 'bold 16px sans-serif',
+                    fill: new ol.style.Fill({ color: '#fff' }),
+                    stroke: new ol.style.Stroke({ color: '#000', width: 2 })
+                })
+            }));
+            break;
+        }
+        case 'distance-label':
+            feature.setStyle((f, resolution) => new ol.style.Style({
+                text: new ol.style.Text({
+                    text: resolution > 6 ? '' : f.get('labelText') || '',
+                    font: 'bold 12px sans-serif',
+                    fill: new ol.style.Fill({ color: 'yellow' }),
+                    stroke: new ol.style.Stroke({ color: 'black', width: 3 }),
+                    offsetY: -10
+                })
+            }));
+            break;
+        case 'threat-circle':
+            feature.setStyle(new ol.style.Style({
+                stroke: new ol.style.Stroke({ color: 'red', width: 2 }),
+                fill: new ol.style.Fill({ color: 'rgba(255,0,0,0.1)' })
+            }));
+            break;
+        case 'threat-label':
+            feature.setStyle((f, resolution) => new ol.style.Style({
+                text: new ol.style.Text({
+                    text: resolution > 6 ? '' : f.get('labelText') || '',
+                    font: 'bold 14px sans-serif',
+                    fill: new ol.style.Fill({ color: 'red' }),
+                    stroke: new ol.style.Stroke({ color: 'white', width: 3 })
+                })
+            }));
+            break;
+        case 'custom-line':
+            feature.setStyle(new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'black',
+                    width: 2,
+                    lineDash: [4, 4]
+                })
+            }));
+            break;
+        default:
+            break;
+    }
+}
+
+function ensureFlightPlanLayer(mapInstance = window.map) {
+    if (!flightPlanSource) {
+        flightPlanSource = flightPathLayer?.getSource() || new ol.source.Vector();
+    }
+
+    if (!flightPathLayer) {
+        flightPathLayer = new ol.layer.Vector({ source: flightPlanSource });
+    } else if (flightPathLayer.getSource() !== flightPlanSource) {
+        flightPathLayer.setSource(flightPlanSource);
+    }
+
+    if (mapInstance) {
+        const layers = mapInstance.getLayers().getArray();
+        if (!layers.includes(flightPathLayer)) {
+            mapInstance.addLayer(flightPathLayer);
+        }
+    }
+
+    window.flightPlanSource = flightPlanSource;
+    window.flightPlanLayer = flightPathLayer;
+    window.applyFlightPlanFeatureStyle = applyFlightPlanFeatureStyle;
+
+    return flightPlanSource;
+}
+
+function clearFlightPlanData(mapInstance = window.map) {
+    if (flightPathLayer && mapInstance) {
+        mapInstance.removeLayer(flightPathLayer);
+    }
+    flightPathLayer = null;
+    flightPlanSource = null;
+    window.flightPlanSource = null;
+    window.flightPlanLayer = null;
+}
+
+window.ensureFlightPlanLayer = ensureFlightPlanLayer;
+window.clearFlightPlanData = clearFlightPlanData;
+window.applyFlightPlanFeatureStyle = applyFlightPlanFeatureStyle;
+window.flightPlanSource = flightPlanSource;
+window.flightPlanLayer = flightPathLayer;
 
 
 
@@ -99,6 +226,7 @@ function parseBMSINI(content) {
 
 function drawRouteOnMap(map, data) {
     const { coords, threats, lineSegments } = data;
+    clearFlightPlanData(map);
     const vectorSource = new ol.source.Vector();
 
     const feetPerPixel = 1 / data.scale;
@@ -113,12 +241,11 @@ function drawRouteOnMap(map, data) {
             geometry: new ol.geom.LineString(routeCoords)
         });
 
-        routeFeature.setStyle(new ol.style.Style({
-            stroke: new ol.style.Stroke({
-                color: 'white',
-                width: 3
-            })
-        }));
+        routeFeature.setProperties({
+            __layer: 'flightplan',
+            flightFeatureType: 'route-line'
+        });
+        applyFlightPlanFeatureStyle(routeFeature);
 
         vectorSource.addFeature(routeFeature);
     }
@@ -132,34 +259,13 @@ function drawRouteOnMap(map, data) {
             geometry: new ol.geom.Point(point.latlon)
         });
 
-    const isActionType14 = point.action === 14;
-
-    const shapeStyle = isActionType14
-    ? new ol.style.RegularShape({
-        points: 3,
-        radius: 8,
-        rotation: 0,
-        fill: new ol.style.Fill({ color: 'rgba(255, 255, 255, 0)' }), // transparent
-        stroke: new ol.style.Stroke({ color: 'white', width: 2 })
-    })
-    : new ol.style.Circle({
-        radius: 5,
-        fill: new ol.style.Fill({ color: '#ffffff00' }),
-        stroke: new ol.style.Stroke({ color: 'white', width: 2 })
-    });
-
-    marker.setStyle(new ol.style.Style({
-        image: shapeStyle,
-        text: new ol.style.Text({
-            text: `${i + 1}`,
-            offsetY: -15,
-            font: 'bold 16px sans-serif',
-            fill: new ol.style.Fill({ color: '#fff' }),
-            stroke: new ol.style.Stroke({ color: '#000', width: 2 })
-        })
-    }));
-
-       
+        marker.setProperties({
+            __layer: 'flightplan',
+            flightFeatureType: 'waypoint-marker',
+            waypointIndex: i + 1,
+            waypointAction: point.action
+        });
+        applyFlightPlanFeatureStyle(marker);
 
         vectorSource.addFeature(marker);
 
@@ -176,18 +282,11 @@ function drawRouteOnMap(map, data) {
                 geometry: new ol.geom.Point([(current[0] + next[0]) / 2, (current[1] + next[1]) / 2]),
                 labelText: `${distNM.toFixed(1)} NM`
             });
-
-            labelFeature.setStyle((feature, resolution) => {
-                return new ol.style.Style({
-                    text: new ol.style.Text({
-                        text: resolution > 6 ? '' : feature.get('labelText'),
-                        font: 'bold 12px sans-serif',
-                        fill: new ol.style.Fill({ color: 'yellow' }),
-                        stroke: new ol.style.Stroke({ color: 'black', width: 3 }),
-                        offsetY: -10
-                    })
-                });
+            labelFeature.setProperties({
+                __layer: 'flightplan',
+                flightFeatureType: 'distance-label'
             });
+            applyFlightPlanFeatureStyle(labelFeature);
 
             vectorSource.addFeature(labelFeature);
         }
@@ -199,10 +298,12 @@ function drawRouteOnMap(map, data) {
             geometry: new ol.geom.Circle(threat.center, threat.radius)
         });
 
-        circleFeature.setStyle(new ol.style.Style({
-            stroke: new ol.style.Stroke({ color: 'red', width: 2 }),
-            fill: new ol.style.Fill({ color: 'rgba(255,0,0,0.1)' })
-        }));
+        circleFeature.setProperties({
+            __layer: 'flightplan',
+            flightFeatureType: 'threat-circle',
+            radius: threat.radius
+        });
+        applyFlightPlanFeatureStyle(circleFeature);
 
         vectorSource.addFeature(circleFeature);
 
@@ -213,17 +314,11 @@ function drawRouteOnMap(map, data) {
             ]),
             labelText: threat.label
         });
-
-        labelFeature.setStyle((feature, resolution) => {
-            return new ol.style.Style({
-                text: new ol.style.Text({
-                    text: resolution > 6 ? '' : feature.get('labelText'),
-                    font: 'bold 14px sans-serif',
-                    fill: new ol.style.Fill({ color: 'red' }),
-                    stroke: new ol.style.Stroke({ color: 'white', width: 3 })
-                })
-            });
+        labelFeature.setProperties({
+            __layer: 'flightplan',
+            flightFeatureType: 'threat-label'
         });
+        applyFlightPlanFeatureStyle(labelFeature);
 
         vectorSource.addFeature(labelFeature);
     }
@@ -236,25 +331,18 @@ function drawRouteOnMap(map, data) {
             geometry: new ol.geom.LineString(segment)
         });
 
-        lineFeature.setStyle(new ol.style.Style({
-            stroke: new ol.style.Stroke({
-                color: 'black', // blue line
-                width: 2,
-                lineDash: [4, 4]
-            })
-        }));
+        lineFeature.setProperties({
+            __layer: 'flightplan',
+            flightFeatureType: 'custom-line'
+        });
+        applyFlightPlanFeatureStyle(lineFeature);
 
         vectorSource.addFeature(lineFeature);
     }
-
-    // Remove previous layer if it exists
-    if (flightPathLayer) {
-        map.removeLayer(flightPathLayer);
-    }
-
-    // Create and add new vector layer
     flightPathLayer = new ol.layer.Vector({ source: vectorSource  });
-
+    flightPlanSource = vectorSource;
+    window.flightPlanSource = vectorSource;
+    window.flightPlanLayer = flightPathLayer;
 
     map.addLayer(flightPathLayer);
 
