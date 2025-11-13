@@ -4,11 +4,10 @@ TODO
 - Toggle labels, airports, bullseye, marker layer
 - Extend airbases with country, add to search a list grouped by country
 - Add runway info, elevation, Lat Long
-- No Whiteboard options like color, fill, line thickness
 - Add extra waypoint information (altitude, etc. )
-- No weathermap/fmap import support
 - No live connectivity/ collaborate (only import/export)
-
+- [IDEA] Create/Edit weather maps 
+- Import live weather from GRIB source
 
 
 
