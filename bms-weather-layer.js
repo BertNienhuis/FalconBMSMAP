@@ -72,6 +72,49 @@
             windDirection: new Array(WIND_ALTITUDES_FT.length).fill(0)
         }));
 
+        const createGrid = (initialValue = null) =>
+            Array.from({ length: rows }, () => Array.from({ length: columns }, () => initialValue));
+
+        const createWindGrid = () =>
+            Array.from({ length: rows }, () =>
+                Array.from({ length: columns }, () =>
+                    Array.from({ length: WIND_ALTITUDES_FT.length }, () => ({ direction: null, speed: null }))
+                )
+            );
+
+        const fmap = {
+            time: '',
+            version,
+            changed: false,
+            scaler: cellSpacingKm,
+            dimension: { x: columns, y: rows },
+            airmass: { direction: 0, speed: 0 },
+            turbulence: { top: null, bottom: null },
+            contrail: [],
+            cells: totalCells,
+            type: createGrid(0),
+            pressure: createGrid(null),
+            temperature: createGrid(null),
+            wind: createWindGrid(),
+            cloud: {
+                base: createGrid(null),
+                cover: createGrid(0),
+                size: createGrid(null),
+                type: createGrid(0)
+            },
+            shower: createGrid(0),
+            visibility: createGrid(null),
+            fog: createGrid(null),
+            analytics: {
+                pressure_min: Infinity,
+                pressure_max: -Infinity,
+                temperature_min: Infinity,
+                temperature_max: -Infinity
+            }
+        };
+
+        const airmassAccumulator = { x: 0, y: 0, samples: 0 };
+
         const int32Array = new Int32Array(buffer);
         const uint32Array = new Uint32Array(buffer);
         const float32Array = new Float32Array(buffer);
@@ -101,47 +144,86 @@
             return true;
         };
 
-        if (!readLayerFromOffset(int32Array, FMAP_LAYER_OFFSETS.weatherType, (cell, value) => { cell.weatherClass = value; })) {
+        if (!readLayerFromOffset(int32Array, FMAP_LAYER_OFFSETS.weatherType, (cell, value) => {
+            cell.weatherClass = value;
+            fmap.type[cell.row][cell.col] = value;
+        })) {
             throw new Error('Invalid FMAP: missing weather classification layer');
         }
 
-        if (!readLayerFromOffset(float32Array, FMAP_LAYER_OFFSETS.pressure, (cell, value) => { cell.pressureMb = value; })) {
+        if (!readLayerFromOffset(float32Array, FMAP_LAYER_OFFSETS.pressure, (cell, value) => {
+            cell.pressureMb = value;
+            fmap.pressure[cell.row][cell.col] = value;
+            if (Number.isFinite(value)) {
+                fmap.analytics.pressure_min = Math.min(fmap.analytics.pressure_min, value);
+                fmap.analytics.pressure_max = Math.max(fmap.analytics.pressure_max, value);
+            }
+        })) {
             throw new Error('Invalid FMAP: missing pressure layer');
         }
 
-        if (!readLayerFromOffset(float32Array, FMAP_LAYER_OFFSETS.temperature, (cell, value) => { cell.temperatureC = value; })) {
+        if (!readLayerFromOffset(float32Array, FMAP_LAYER_OFFSETS.temperature, (cell, value) => {
+            cell.temperatureC = value;
+            fmap.temperature[cell.row][cell.col] = value;
+            if (Number.isFinite(value)) {
+                fmap.analytics.temperature_min = Math.min(fmap.analytics.temperature_min, value);
+                fmap.analytics.temperature_max = Math.max(fmap.analytics.temperature_max, value);
+            }
+        })) {
             throw new Error('Invalid FMAP: missing temperature layer');
         }
 
         readWindLayer(FMAP_LAYER_OFFSETS.windSpeed, (cell, altitudeIndex, value) => {
             cell.windSpeed[altitudeIndex] = value;
+            const windSlot = fmap.wind[cell.row]?.[cell.col]?.[altitudeIndex];
+            if (windSlot) {
+                windSlot.speed = value;
+            }
         });
 
         readWindLayer(FMAP_LAYER_OFFSETS.windDirection, (cell, altitudeIndex, value) => {
             cell.windDirection[altitudeIndex] = value;
+            const windSlot = fmap.wind[cell.row]?.[cell.col]?.[altitudeIndex];
+            if (windSlot) {
+                windSlot.direction = value;
+            }
+            if (altitudeIndex === 0) {
+                const surfaceSpeed = cell.windSpeed?.[altitudeIndex];
+                if (Number.isFinite(surfaceSpeed) && Number.isFinite(value)) {
+                    const radians = (value * Math.PI) / 180;
+                    airmassAccumulator.x += surfaceSpeed * Math.sin(radians);
+                    airmassAccumulator.y += surfaceSpeed * Math.cos(radians);
+                    airmassAccumulator.samples += 1;
+                }
+            }
         });
 
         readLayerFromOffset(float32Array, FMAP_LAYER_OFFSETS.cloudBase, (cell, value) => {
             cell.cloudBaseFt = value;
+            fmap.cloud.base[cell.row][cell.col] = value;
         });
 
         readLayerFromOffset(uint32Array, FMAP_LAYER_OFFSETS.cloudCover, (cell, value) => {
             cell.cloudCoverageIndex = value;
+            fmap.cloud.cover[cell.row][cell.col] = value;
         });
 
         readLayerFromOffset(float32Array, FMAP_LAYER_OFFSETS.cloudSize, (cell, value) => {
             // Treat the "size" metric as a proxy for depth (scale to feet for styling)
             cell.cloudDepthFt = value * 1000;
+            fmap.cloud.size[cell.row][cell.col] = value;
         });
 
         readLayerFromOffset(uint32Array, FMAP_LAYER_OFFSETS.cloudType, (cell, value) => {
             cell.cloudTypeIndex = value;
             cell.hasStorm = value === 1;
+            fmap.cloud.type[cell.row][cell.col] = value;
         });
 
         const showerOffset = VERSION_DATA_OFFSETS.shower[version] ?? 0;
         if (!readLayerFromOffset(uint32Array, showerOffset, (cell, value) => {
             cell.hasRain = value === 1;
+            fmap.shower[cell.row][cell.col] = value;
         })) {
             cells.forEach(cell => { cell.hasRain = false; });
         }
@@ -150,6 +232,7 @@
         if (visibilityOffset > 0) {
             readLayerFromOffset(float32Array, visibilityOffset, (cell, value) => {
                 cell.visibilityKm = value;
+                fmap.visibility[cell.row][cell.col] = value;
             });
         }
 
@@ -157,6 +240,7 @@
         if (fogOffset > 0) {
             readLayerFromOffset(float32Array, fogOffset, (cell, value) => {
                 cell.fogBaseFt = value;
+                fmap.fog[cell.row][cell.col] = value;
             });
         }
 
@@ -172,6 +256,23 @@
             }
         });
 
+        const finalizeRangeValue = value => (Number.isFinite(value) ? value : null);
+        fmap.analytics.pressure_min = finalizeRangeValue(fmap.analytics.pressure_min);
+        fmap.analytics.pressure_max = finalizeRangeValue(fmap.analytics.pressure_max);
+        fmap.analytics.temperature_min = finalizeRangeValue(fmap.analytics.temperature_min);
+        fmap.analytics.temperature_max = finalizeRangeValue(fmap.analytics.temperature_max);
+
+        if (airmassAccumulator.samples > 0) {
+            const avgX = airmassAccumulator.x / airmassAccumulator.samples;
+            const avgY = airmassAccumulator.y / airmassAccumulator.samples;
+            const avgSpeed = Math.hypot(avgX, avgY);
+            const avgDir = (Math.atan2(avgX, avgY) * 180 / Math.PI + 360) % 360;
+            fmap.airmass = {
+                direction: avgDir,
+                speed: avgSpeed
+            };
+        }
+
         return {
             version,
             nodeCount,
@@ -179,7 +280,9 @@
             rows,
             cellSpacingKm,
             anchor,
-            cells
+            totalCells,
+            cells,
+            fmap
         };
     }
 
@@ -191,13 +294,11 @@
             this.windAltitudeIndex = 0;
             this.uiBound = false;
             this.temperatureRange = { min: 0, max: 0 };
-            this.precipMax = 1;
             this.mapSize = 16384;
             this.cellWidth = 0;
             this.cellHeight = 0;
             this.cellDiag = 0;
             this.windBarbScale = 1;
-            this.dopplerCache = new Map();
             this.windBarbCache = new Map();
             this.cloudSpriteCache = new Map();
             this.debugEnabled = false;
@@ -247,13 +348,14 @@
         bindMap(map) {
             if (this.map && this.map !== map) {
                 this.setDebugEnabled(false, true);
-                Object.values(this.layers).forEach(layer => this.map.removeLayer(layer));
+                this.forEachLayer(layer => this.map.removeLayer(layer));
                 this.clear(false);
             }
 
             this.map = map;
-            Object.values(this.layers).forEach(layer => {
-                if (!map.getLayers().getArray().includes(layer)) {
+            const layersArray = map.getLayers().getArray();
+            this.forEachLayer(layer => {
+                if (!layersArray.includes(layer)) {
                     map.addLayer(layer);
                 }
             });
@@ -318,6 +420,26 @@
             this.uiBound = true;
         }
 
+        forEachLayer(callback) {
+            if (!callback) return;
+            Object.values(this.layers).forEach(callback);
+        }
+
+        setLayerToggle(key, checked) {
+            const checkbox = this.ui.toggles[key];
+            if (!checkbox) return;
+            checkbox.checked = checked;
+            this.toggleLayer(key, checked);
+        }
+
+        extractTimeFromFilename(filename) {
+            if (!filename) return '';
+            const normalized = filename.split(/[\\/]/).pop() || filename;
+            const dotIndex = normalized.lastIndexOf('.');
+            const base = dotIndex > 0 ? normalized.slice(0, dotIndex) : normalized;
+            return base.trim();
+        }
+
         updateStatus(text, isError = false) {
             if (!this.ui.status) return;
             this.ui.status.textContent = text;
@@ -362,115 +484,16 @@
             this.layers.wind.changed();
         }
 
-        setDebugEnabled(enabled, forceDisable = false) {
-            if (!forceDisable) {
-                this.debugEnabled = Boolean(enabled);
-            }
-
-            if (this.ui.debugToggle) {
-                this.ui.debugToggle.checked = this.debugEnabled;
-                this.ui.debugToggle.disabled = !this.data;
-            }
-
-            if (!this.map) return;
-
-            const shouldActivate = this.debugEnabled && this.data && !forceDisable;
-
-            if (!shouldActivate) {
-                this.hideDebugPopup();
-                if (this.debugOverlay) {
-                    this.map.removeOverlay(this.debugOverlay);
-                    this.debugOverlay = null;
-                    this.debugElement = null;
-                }
-                if (this.debugPointerMoveHandler) {
-                    this.map.un('pointermove', this.debugPointerMoveHandler);
-                    this.debugPointerMoveHandler = null;
-                }
-                if (this.debugMouseLeaveHandler) {
-                    this.map.getViewport().removeEventListener('mouseleave', this.debugMouseLeaveHandler);
-                    this.debugMouseLeaveHandler = null;
-                }
-                return;
-            }
-
-            if (!this.debugElement) {
-                this.debugElement = document.createElement('div');
-                this.debugElement.className = 'weather-debug-popup';
-            }
-
-            if (!this.debugOverlay) {
-                this.debugOverlay = new ol.Overlay({
-                    element: this.debugElement,
-                    offset: [16, -16],
-                    positioning: 'bottom-left',
-                    stopEvent: false
-                });
-                this.map.addOverlay(this.debugOverlay);
-            }
-
-            if (!this.debugPointerMoveHandler) {
-                this.debugPointerMoveHandler = (evt) => {
-                    if (!evt.coordinate || evt.dragging) return;
-                    const cell = this.getCellAtCoordinate(evt.coordinate);
-                    if (!cell) {
-                        this.hideDebugPopup();
-                        return;
-                    }
-                    this.updateDebugPopup(cell, evt.coordinate);
-                };
-                this.map.on('pointermove', this.debugPointerMoveHandler);
-            }
-
-            if (!this.debugMouseLeaveHandler) {
-                this.debugMouseLeaveHandler = () => this.hideDebugPopup();
-                this.map.getViewport().addEventListener('mouseleave', this.debugMouseLeaveHandler, { passive: true });
-            }
-        }
-
-        getCellAtCoordinate(coord) {
-            if (!this.data || !this.cellWidth || !this.cellHeight) return null;
-            const [x, y] = coord;
-            if (x < 0 || y < 0 || x > this.mapSize || y > this.mapSize) return null;
-            const col = Math.floor(x / this.cellWidth);
-            const row = Math.floor((this.mapSize - y) / this.cellHeight);
-            if (col < 0 || row < 0 || col >= this.data.columns || row >= this.data.rows) return null;
-            return this.data.cells[row * this.data.columns + col];
-        }
-
-        hideDebugPopup() {
-            if (this.debugElement) {
-                this.debugElement.classList.remove('is-visible');
-            }
-        }
-
-        updateDebugPopup(cell, coordinate) {
-            if (!this.debugElement || !this.debugOverlay) return;
-            const altitudeFt = WIND_ALTITUDES_FT[this.windAltitudeIndex] || 0;
-            const altitudeLabel = altitudeFt >= 1000 ? `${(altitudeFt / 1000).toFixed(0)}kft` : `${altitudeFt}ft`;
-            const windSpeed = cell.windSpeed?.[this.windAltitudeIndex];
-            const windDir = cell.windDirection?.[this.windAltitudeIndex];
-
-            const lines = [
-                `<div><strong>Cell</strong>${cell.col}, ${cell.row}</div>`,
-                `<div><strong>Temp</strong>${Number.isFinite(cell.temperatureC) ? `${cell.temperatureC.toFixed(1)} °C` : 'N/A'}</div>`,
-                `<div><strong>Pressure</strong>${Number.isFinite(cell.pressureMb) ? `${cell.pressureMb.toFixed(0)} hPa` : 'N/A'}</div>`,
-                `<div><strong>Wind ${altitudeLabel}</strong>${Number.isFinite(windDir) ? windDir.toFixed(0) : '---'}° @ ${Number.isFinite(windSpeed) ? windSpeed.toFixed(0) : '---'} kt</div>`,
-                `<div><strong>Clouds</strong>${cell.cloudCoverageIndex ?? 'N/A'} / ${cell.cloudBaseFt ? `${(cell.cloudBaseFt / 1000).toFixed(1)}kft` : 'N/A'}</div>`,
-                `<div><strong>Rain</strong>${cell.hasRain ? 'Yes' : 'No'}</div>`
-            ];
-
-            this.debugElement.innerHTML = lines.join('');
-            this.debugElement.classList.add('is-visible');
-            this.debugOverlay.setPosition(coordinate);
-        }
-
         clear(showMessage) {
-            Object.values(this.layers).forEach(layer => layer.getSource().clear());
-            Object.values(this.layers).forEach(layer => layer.setVisible(false));
+            this.forEachLayer(layer => {
+                layer.getSource().clear();
+                layer.setVisible(false);
+            });
             this.data = null;
             this.filename = '';
-            this.dopplerCache.clear();
+            if (typeof window !== 'undefined') {
+                window.fmap = null;
+            }
             this.toggleControls(false);
             if (showMessage) {
                 this.updateStatus('Weather overlay cleared');
@@ -482,25 +505,22 @@
         loadFromArrayBuffer(buffer, filename) {
             const parsed = parseFmap(buffer);
             this.data = parsed;
+            if (parsed.fmap && filename) {
+                const inferredTime = this.extractTimeFromFilename(filename);
+                if (!parsed.fmap.time && inferredTime) {
+                    parsed.fmap.time = inferredTime;
+                }
+            }
+            if (typeof window !== 'undefined') {
+                window.fmap = parsed.fmap;
+            }
             this.filename = filename;
             this.buildFeatures();
             this.toggleControls(true);
 
             // Enable defaults
-            ['weatherType'].forEach(key => {
-                const checkbox = this.ui.toggles[key];
-                if (checkbox) {
-                    checkbox.checked = true;
-                    this.toggleLayer(key, true);
-                }
-            });
-            ['wind'].forEach(key => {
-                const checkbox = this.ui.toggles[key];
-                if (checkbox) {
-                    checkbox.checked = false;
-                    this.toggleLayer(key, false);
-                }
-            });
+            this.setLayerToggle('weatherType', true);
+            this.setLayerToggle('wind', false);
 
             if (this.ui.debugToggle) {
                 this.ui.debugToggle.disabled = false;
@@ -538,8 +558,6 @@
 
             let minTemp = Infinity;
             let maxTemp = -Infinity;
-            let maxPrecip = 0;
-
             for (const cell of this.data.cells) {
                 const center = [
                     (cell.col + 0.5) * this.cellWidth,
@@ -617,27 +635,6 @@
             weatherTypeSource.addFeatures(weatherTypeFeatures);
         }
 
-        createTemperatureStyle(feature, resolution) {
-            if (!this.data || resolution > 30) return null;
-
-            const temp = feature.get('temperature');
-            if (!Number.isFinite(temp)) return null;
-
-            const weatherClass = WEATHER_CLASSES[feature.get('weatherClass')];
-            const color = this.getTemperatureColor(temp);
-            const fontSize = Math.max(11, 18 - (resolution * 1.4));
-
-            return new ol.style.Style({
-                text: new ol.style.Text({
-                    text: `${Math.round(temp)}°`,
-                    font: `600 ${fontSize}px 'Segoe UI', sans-serif`,
-                    fill: new ol.style.Fill({ color }),
-                    stroke: new ol.style.Stroke({ color: 'rgba(12,12,12,0.75)', width: 3 }),
-                    offsetY: -2
-                })
-            });
-        }
-
         getCellPolygon(col, row) {
             const minX = col * this.cellWidth;
             const maxX = minX + this.cellWidth;
@@ -652,17 +649,23 @@
             ];
         }
 
-        createWeatherTypeStyle(feature) {
-            const weatherClass = feature.get('weatherClass');
-            const colors = {
-                2: 'rgba(34,197,94,0.5)',
-                3: 'rgba(250,204,21,0.5)',
-                4: 'rgba(239,68,68,0.5)'
-            };
-            const fillColor = colors[weatherClass];
-            if (!fillColor) return null;
+        createTemperatureStyle(feature, resolution) {
+            if (!this.data || resolution > 30) return null;
+
+            const temp = feature.get('temperature');
+            if (!Number.isFinite(temp)) return null;
+
+            const color = this.getTemperatureColor(temp);
+            const fontSize = Math.max(11, 18 - (resolution * 1.4));
+
             return new ol.style.Style({
-                fill: new ol.style.Fill({ color: fillColor })
+                text: new ol.style.Text({
+                    text: `${Math.round(temp)}°`,
+                    font: `600 ${fontSize}px 'Segoe UI', sans-serif`,
+                    fill: new ol.style.Fill({ color }),
+                    stroke: new ol.style.Stroke({ color: 'rgba(12,12,12,0.75)', width: 3 }),
+                    offsetY: -2
+                })
             });
         }
 
@@ -680,6 +683,20 @@
             ];
             const band = bands.find(b => value <= b.max);
             return band?.color ?? '#ef4444';
+        }
+
+        createWeatherTypeStyle(feature) {
+            const weatherClass = feature.get('weatherClass');
+            const colors = {
+                2: 'rgba(34,197,94,0.5)',
+                3: 'rgba(250,204,21,0.5)',
+                4: 'rgba(239,68,68,0.5)'
+            };
+            const fillColor = colors[weatherClass];
+            if (!fillColor) return null;
+            return new ol.style.Style({
+                fill: new ol.style.Fill({ color: fillColor })
+            });
         }
 
         createWindStyle(feature, resolution) {
@@ -738,12 +755,6 @@
                     opacity
                 })
             });
-        }
-
-        createRainStyle(feature, resolution) {
-            if (!this.data || resolution > 45) return null;
-
-            const bucket = feature.get('bucket');
         }
 
         getWindBarbSprite(speed) {
@@ -876,6 +887,223 @@
             const sprite = { canvas, size };
             this.cloudSpriteCache.set(bucket, sprite);
             return sprite;
+        }
+
+        setDebugEnabled(enabled, forceDisable = false) {
+            if (!forceDisable) {
+                this.debugEnabled = Boolean(enabled);
+            }
+
+            if (this.ui.debugToggle) {
+                this.ui.debugToggle.checked = this.debugEnabled;
+                this.ui.debugToggle.disabled = !this.data;
+            }
+
+            if (!this.map) return;
+
+            const shouldActivate = this.debugEnabled && this.data && !forceDisable;
+
+            if (!shouldActivate) {
+                this.hideDebugPopup();
+                if (this.debugOverlay) {
+                    this.map.removeOverlay(this.debugOverlay);
+                    this.debugOverlay = null;
+                    this.debugElement = null;
+                }
+                if (this.debugPointerMoveHandler) {
+                    this.map.un('pointermove', this.debugPointerMoveHandler);
+                    this.debugPointerMoveHandler = null;
+                }
+                if (this.debugMouseLeaveHandler) {
+                    this.map.getViewport().removeEventListener('mouseleave', this.debugMouseLeaveHandler);
+                    this.debugMouseLeaveHandler = null;
+                }
+                return;
+            }
+
+            if (!this.debugElement) {
+                this.debugElement = document.createElement('div');
+                this.debugElement.className = 'weather-debug-popup';
+            }
+
+            if (!this.debugOverlay) {
+                this.debugOverlay = new ol.Overlay({
+                    element: this.debugElement,
+                    offset: [16, -16],
+                    positioning: 'bottom-left',
+                    stopEvent: false
+                });
+                this.map.addOverlay(this.debugOverlay);
+            }
+
+            if (!this.debugPointerMoveHandler) {
+                this.debugPointerMoveHandler = (evt) => {
+                    if (!evt.coordinate || evt.dragging) return;
+                    const cell = this.getCellAtCoordinate(evt.coordinate);
+                    if (!cell) {
+                        this.hideDebugPopup();
+                        return;
+                    }
+                    this.updateDebugPopup(cell, evt.coordinate);
+                };
+                this.map.on('pointermove', this.debugPointerMoveHandler);
+            }
+
+            if (!this.debugMouseLeaveHandler) {
+                this.debugMouseLeaveHandler = () => this.hideDebugPopup();
+                this.map.getViewport().addEventListener('mouseleave', this.debugMouseLeaveHandler, { passive: true });
+            }
+        }
+
+        getCellAtCoordinate(coord) {
+            if (!this.data || !this.cellWidth || !this.cellHeight) return null;
+            const [x, y] = coord;
+            if (x < 0 || y < 0 || x > this.mapSize || y > this.mapSize) return null;
+            const col = Math.floor(x / this.cellWidth);
+            const row = Math.floor((this.mapSize - y) / this.cellHeight);
+            if (col < 0 || row < 0 || col >= this.data.columns || row >= this.data.rows) return null;
+            return this.data.cells[row * this.data.columns + col];
+        }
+
+        hideDebugPopup() {
+            if (this.debugElement) {
+                this.debugElement.classList.remove('is-visible');
+            }
+        }
+
+        updateDebugPopup(cell, coordinate) {
+            if (!this.debugElement || !this.debugOverlay) return;
+            const generalLines = this.buildGeneralDebugLines();
+            const cellLines = this.buildCellDebugLines(cell);
+            const html = [
+                '<div class="weather-debug-section weather-debug-general">',
+                '<div class="weather-debug-title">Map Info</div>',
+                ...generalLines,
+                '</div>',
+                '<div class="weather-debug-section weather-debug-cell">',
+                `<div class="weather-debug-title">Cell ${cell.col}, ${cell.row}</div>`,
+                ...cellLines,
+                '</div>'
+            ].join('');
+
+            this.debugElement.innerHTML = html;
+            this.debugElement.classList.add('is-visible');
+            this.debugOverlay.setPosition(coordinate);
+        }
+
+        buildGeneralDebugLines() {
+            if (!this.data) {
+                return ['<div>No weather data</div>'];
+            }
+
+            const {
+                fmap = {},
+                columns,
+                rows,
+                cellSpacingKm,
+                totalCells,
+                nodeCount,
+                anchor
+            } = this.data;
+
+            const analytics = fmap.analytics || {};
+            const gridText = Number.isFinite(columns) && Number.isFinite(rows)
+                ? `${columns} x ${rows}`
+                : 'N/A';
+            const spacingText = Number.isFinite(cellSpacingKm)
+                ? `${cellSpacingKm.toFixed(1)} km`
+                : 'N/A';
+            const totalCellsText = Number.isFinite(totalCells ?? fmap.cells)
+                ? (totalCells ?? fmap.cells)
+                : 'N/A';
+            const anchorText = Array.isArray(anchor) && anchor.length
+                ? anchor.join(', ')
+                : 'N/A';
+            const timeText = fmap.time || this.extractTimeFromFilename(this.filename) || 'N/A';
+            const versionText = fmap.version ?? this.data.version ?? 'N/A';
+            const airmassDir = fmap.airmass?.direction;
+            const airmassSpeed = fmap.airmass?.speed;
+            const airmassText = Number.isFinite(airmassDir) && Number.isFinite(airmassSpeed)
+                ? `${Math.round(airmassDir)}&deg; / ${Math.round(airmassSpeed)} kt`
+                : 'N/A';
+            const turbTop = fmap.turbulence?.top;
+            const turbBottom = fmap.turbulence?.bottom;
+            const turbulenceText = (Number.isFinite(turbTop) || Number.isFinite(turbBottom))
+                ? `${this.formatFeet(turbTop)} - ${this.formatFeet(turbBottom)}`
+                : 'N/A';
+            const contrailValues = Array.isArray(fmap.contrail)
+                ? fmap.contrail.filter(value => Number.isFinite(value))
+                : [];
+            const contrailText = contrailValues.length
+                ? contrailValues.map(value => this.formatFeet(value)).join(', ')
+                : 'N/A';
+
+            return [
+                `<div><strong>File</strong>${this.filename || 'N/A'}</div>`,
+                `<div><strong>Time</strong>${timeText}</div>`,
+                `<div><strong>Version</strong>${versionText}</div>`,
+                `<div><strong>Grid</strong>${gridText}</div>`,
+                `<div><strong>Cells</strong>${totalCellsText} (nodes ${nodeCount ?? 'N/A'})</div>`,
+                `<div><strong>Cell Spacing</strong>${spacingText}</div>`,
+                `<div><strong>Anchor</strong>${anchorText}</div>`,
+                `<div><strong>Airmass</strong>${airmassText}</div>`,
+                `<div><strong>Turbulence</strong>${turbulenceText}</div>`,
+                `<div><strong>Contrail</strong>${contrailText}</div>`,
+                `<div><strong>Pressure Range</strong>${this.formatRange(analytics.pressure_min, analytics.pressure_max, 'hPa', 0)}</div>`,
+                `<div><strong>Temp Range</strong>${this.formatRange(analytics.temperature_min, analytics.temperature_max, '&deg;C', 1)}</div>`
+            ];
+        }
+
+        buildCellDebugLines(cell) {
+            const lines = [];
+            const weatherClass = WEATHER_CLASSES[cell.weatherClass];
+            lines.push(`<div><strong>Weather</strong>${weatherClass?.label || (cell.weatherClass ? `Class ${cell.weatherClass}` : 'N/A')}</div>`);
+            lines.push(`<div><strong>Temp</strong>${Number.isFinite(cell.temperatureC) ? `${cell.temperatureC.toFixed(1)} &deg;C` : 'N/A'}</div>`);
+            lines.push(`<div><strong>Pressure</strong>${Number.isFinite(cell.pressureMb) ? `${cell.pressureMb.toFixed(0)} hPa` : 'N/A'}</div>`);
+
+            const altitudeFt = WIND_ALTITUDES_FT[this.windAltitudeIndex] || 0;
+            const altitudeLabel = altitudeFt >= 1000 ? `${(altitudeFt / 1000).toFixed(0)}kft` : `${altitudeFt}ft`;
+            const windSpeed = cell.windSpeed?.[this.windAltitudeIndex];
+            const windDir = cell.windDirection?.[this.windAltitudeIndex];
+            const windText = Number.isFinite(windDir) && Number.isFinite(windSpeed)
+                ? `${windDir.toFixed(0)}&deg; / ${windSpeed.toFixed(0)} kt`
+                : 'N/A';
+            lines.push(`<div><strong>Wind ${altitudeLabel}</strong>${windText}</div>`);
+
+            lines.push(`<div><strong>Cloud Cover</strong>${cell.cloudCoverageIndex ?? 'N/A'}</div>`);
+            lines.push(`<div><strong>Cloud Base</strong>${this.formatFeet(cell.cloudBaseFt)}</div>`);
+            if (Number.isFinite(cell.cloudDepthFt)) {
+                lines.push(`<div><strong>Cloud Depth</strong>${this.formatFeet(cell.cloudDepthFt)}</div>`);
+            }
+            lines.push(`<div><strong>Cloud Type</strong>${CLOUD_TYPES[cell.cloudTypeIndex] || 'N/A'}</div>`);
+            lines.push(`<div><strong>Visibility</strong>${this.formatKm(cell.visibilityKm)}</div>`);
+            lines.push(`<div><strong>Fog Base</strong>${this.formatFeet(cell.fogBaseFt)}</div>`);
+            lines.push(`<div><strong>Rain</strong>${cell.hasRain ? 'Yes' : 'No'}</div>`);
+            lines.push(`<div><strong>Storm</strong>${cell.hasStorm ? 'Yes' : 'No'}</div>`);
+
+            return lines;
+        }
+
+        formatFeet(value) {
+            if (!Number.isFinite(value)) return 'N/A';
+            if (Math.abs(value) >= 1000) {
+                return `${(value / 1000).toFixed(1)} kft`;
+            }
+            return `${Math.round(value)} ft`;
+        }
+
+        formatKm(value) {
+            return Number.isFinite(value) ? `${value.toFixed(1)} km` : 'N/A';
+        }
+
+        formatRange(min, max, unit = '', digits = 1) {
+            if (!Number.isFinite(min) && !Number.isFinite(max)) {
+                return 'N/A';
+            }
+            const suffix = unit ? ` ${unit}` : '';
+            const minStr = Number.isFinite(min) ? `${min.toFixed(digits)}${suffix}` : 'N/A';
+            const maxStr = Number.isFinite(max) ? `${max.toFixed(digits)}${suffix}` : 'N/A';
+            return `${minStr} - ${maxStr}`;
         }
     }
 
