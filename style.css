@@ -791,7 +791,6 @@ canvas {
 .weather-panel-content {
     display: flex;
     flex-direction: column;
-    gap: 12px;
 }
 
 .weather-section {
@@ -1133,6 +1132,15 @@ canvas {
     display: flex;
     gap: 10px;
     flex-direction: row;
+}
+
+.weather-action-footer {
+    display: flex;
+    gap: 10px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
 }
 
 .weather-toggle-list {

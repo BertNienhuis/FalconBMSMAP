@@ -487,7 +487,7 @@
             this.toggleControls(true);
 
             // Enable defaults
-            ['temperature', 'clouds', 'weatherType'].forEach(key => {
+            ['weatherType'].forEach(key => {
                 const checkbox = this.ui.toggles[key];
                 if (checkbox) {
                     checkbox.checked = true;

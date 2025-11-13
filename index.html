@@ -4,7 +4,8 @@
 <head>
     <meta charset="utf-8">
     <title>Falcon BMS Flat Map</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
@@ -33,40 +34,46 @@
         <div id="control-bar" role="complementary" aria-label="Toolbar">
             <div class="tool-group">
                 <select id="theater-select" class="glass-select map-select" aria-label="Select theater">
-                <option value="Korea">Korea</option>
-                <option value="Israel">Israel</option>
-                <option value="Balkans">Balkans</option>
-            </select>
-            <input id="airport-search" type="text" placeholder="Search airports..." />
-            <ul id="airport-search-results" class="hidden"></ul>
-        </div>
-        <div class="tool-group">
-            <label class="button file-upload-label" title="Open mission">
-                <i data-lucide="folder-open"></i> Open mission
-                <input type="file" id="ini-loader" style="display: none;">
-            </label>
+                    <option value="Korea">Korea</option>
+                    <option value="Israel">Israel</option>
+                    <option value="Balkans">Balkans</option>
+                </select>
+                <input id="airport-search" type="text" placeholder="Search airports..." />
+                <ul id="airport-search-results" class="hidden"></ul>
+            </div>
+            <div class="tool-group">
+                <label class="button file-upload-label" title="Open mission">
+                    <i data-lucide="folder-open"></i> Open mission
+                    <input type="file" id="ini-loader" style="display: none;">
+                </label>
 
-            <button id="clear-button" class="button" title="Clear mission"><i data-lucide="trash-2"></i> Clear</button>
-        </div>
+                <button id="clear-button" class="button" title="Clear mission"><i data-lucide="trash-2"></i>
+                    Clear</button>
+            </div>
 
-        <div class="tool-group">
-            <button id="ruler-button" class="button" title="Measure distance (L)"><i data-lucide="ruler"></i>
-                Ruler</button>
-            <button id="marker-button" class="button" title="Add marker"><i data-lucide="map-pin"></i> Marker</button>
-            <button id="bullseye-button" class="button" title="Move Bullseye"><i data-lucide="crosshair"></i> Bullseye
-            </button>
-            <button id="weather-button" class="button" title="Weather tools" aria-controls="weather-panel" aria-expanded="false">
-                <i data-lucide="cloudy"></i> Weather
-            </button>
-            <button id="whiteboard-toolbar-toggle" class="button" title="Whiteboard tools" aria-controls="whiteboard-toolbar" aria-expanded="false"><i data-lucide="pen-tool"></i> Whiteboard
-            </button>
-            <button id="pdf-viewer-toggle" class="button" title="Open PDF viewer" aria-controls="pdf-viewer-overlay" aria-expanded="false">
-                <i data-lucide="file-text"></i> PDF Viewer
-            </button>
-        </div>
+            <div class="tool-group">
+                <button id="ruler-button" class="button" title="Measure distance (L)"><i data-lucide="ruler"></i>
+                    Ruler</button>
+                <button id="marker-button" class="button" title="Add marker"><i data-lucide="map-pin"></i>
+                    Marker</button>
+                <button id="bullseye-button" class="button" title="Move Bullseye"><i data-lucide="crosshair"></i>
+                    Bullseye
+                </button>
+                <button id="weather-button" class="button" title="Weather tools" aria-controls="weather-panel"
+                    aria-expanded="false">
+                    <i data-lucide="cloudy"></i> Weather
+                </button>
+                <button id="whiteboard-toolbar-toggle" class="button" title="Whiteboard tools"
+                    aria-controls="whiteboard-toolbar" aria-expanded="false"><i data-lucide="pen-tool"></i> Whiteboard
+                </button>
+                <button id="pdf-viewer-toggle" class="button" title="Open PDF viewer" aria-controls="pdf-viewer-overlay"
+                    aria-expanded="false">
+                    <i data-lucide="file-text"></i> PDF Viewer
+                </button>
+            </div>
 
-        <div class="tool-group">
-            <div class="tool-group-header">Import / Export</div>
+            <div class="tool-group">
+                <div class="tool-group-header">Import / Export</div>
                 <label class="button" title="Import layers">
                     <i data-lucide="download"></i> Import layers
                     <input type="file" id="import-layers" accept=".json" style="display: none;">
@@ -76,16 +83,20 @@
                 </button>
             </div>
         </div>
-        <button id="control-toggle" class="floating-toggle floating-toggle--close" title="Hide toolbar" aria-expanded="true" aria-controls="control-bar">
+        <button id="control-toggle" class="floating-toggle floating-toggle--close" title="Hide toolbar"
+            aria-expanded="true" aria-controls="control-bar">
             <i id="control-toggle-icon" class="floating-toggle-icon " data-lucide="x"></i>
         </button>
     </div>
-    <button id="control-toggle-open" class="floating-toggle floating-toggle--open" title="Show toolbar" aria-controls="control-bar" aria-expanded="false">
+    <button id="control-toggle-open" class="floating-toggle floating-toggle--open" title="Show toolbar"
+        aria-controls="control-bar" aria-expanded="false">
         <i data-lucide="panel-left-open"></i>
     </button>
 
-    <div id="whiteboard-toolbar" class="whiteboard-toolbar overlay-panel" aria-label="Whiteboard tools" aria-hidden="true">
-        <button id="whiteboard-toolbar-close" class="floating-toggle floating-toggle--close" title="Close whiteboard tools" aria-label="Close whiteboard toolbar">
+    <div id="whiteboard-toolbar" class="whiteboard-toolbar overlay-panel" aria-label="Whiteboard tools"
+        aria-hidden="true">
+        <button id="whiteboard-toolbar-close" class="floating-toggle floating-toggle--close"
+            title="Close whiteboard tools" aria-label="Close whiteboard toolbar">
             <i data-lucide="x"></i>
         </button>
         <div class="whiteboard-toolset">
@@ -149,13 +160,15 @@
                         <div class="whiteboard-style-header">
                             <span class="whiteboard-style-text">Width</span>
                         </div>
-                        <input type="range" id="whiteboard-line-width" min="1" max="10" step="1" value="2" aria-label="Line width">
+                        <input type="range" id="whiteboard-line-width" min="1" max="10" step="1" value="2"
+                            aria-label="Line width">
                     </label>
                     <label class="whiteboard-style-control whiteboard-style-range" for="whiteboard-fill-opacity">
                         <div class="whiteboard-style-header">
                             <span class="whiteboard-style-text">Opacity</span>
                         </div>
-                        <input type="range" id="whiteboard-fill-opacity" min="0" max="100" step="5" value="20" aria-label="Fill opacity">
+                        <input type="range" id="whiteboard-fill-opacity" min="0" max="100" step="5" value="20"
+                            aria-label="Fill opacity">
                     </label>
                 </div>
                 <div class="whiteboard-style-control whiteboard-style-select compact-select">
@@ -170,8 +183,10 @@
     </div>
 
     <!-- PDF Viewer -->
-    <div id="pdf-viewer-overlay" class="pdf-viewer overlay-panel" aria-hidden="true" role="dialog" aria-label="PDF viewer overlay">
-        <button id="pdf-viewer-close" class="floating-toggle floating-toggle--close" title="Close PDF viewer" aria-label="Close PDF viewer">
+    <div id="pdf-viewer-overlay" class="pdf-viewer overlay-panel" aria-hidden="true" role="dialog"
+        aria-label="PDF viewer overlay">
+        <button id="pdf-viewer-close" class="floating-toggle floating-toggle--close" title="Close PDF viewer"
+            aria-label="Close PDF viewer">
             <i data-lucide="x"></i>
         </button>
         <div class="pdf-viewer-controls">
@@ -179,7 +194,8 @@
                 <i data-lucide="upload-cloud"></i> Upload PDF
                 <input type="file" id="pdf-file-input" accept="application/pdf" style="display: none;">
             </label>
-            <input id="pdf-url-input" class="glass-input pdf-url-input" type="text" placeholder="Paste PDF URL..." aria-label="PDF URL">
+            <input id="pdf-url-input" class="glass-input pdf-url-input" type="text" placeholder="Paste PDF URL..."
+                aria-label="PDF URL">
             <button id="pdf-load-button" class="button" title="Load PDF from URL">
                 <i data-lucide="link-2"></i> Load URL
             </button>
@@ -192,8 +208,10 @@
     </div>
 
     <!-- Marker Popup -->
-    <div id="marker-popup" class="marker-popup overlay-panel" aria-hidden="true" role="dialog" aria-label="Marker tools">
-        <button id="marker-popup-close" class="floating-toggle floating-toggle--close" title="Close marker tools" aria-label="Close marker tools">
+    <div id="marker-popup" class="marker-popup overlay-panel" aria-hidden="true" role="dialog"
+        aria-label="Marker tools">
+        <button id="marker-popup-close" class="floating-toggle floating-toggle--close" title="Close marker tools"
+            aria-label="Close marker tools">
             <i data-lucide="x"></i>
         </button>
         <div class="marker-row">
@@ -233,8 +251,10 @@
         </div>
     </div>
 
-    <div id="weather-panel" class="weather-panel overlay-panel" aria-hidden="true" role="dialog" aria-label="Weather tools">
-        <button id="weather-panel-close" class="floating-toggle floating-toggle--close" title="Close weather tools" aria-label="Close weather tools">
+    <div id="weather-panel" class="weather-panel overlay-panel" aria-hidden="true" role="dialog"
+        aria-label="Weather tools">
+        <button id="weather-panel-close" class="floating-toggle floating-toggle--close" title="Close weather tools"
+            aria-label="Close weather tools">
             <i data-lucide="x"></i>
         </button>
         <div class="weather-panel-content">
@@ -250,33 +270,32 @@
             <div class="weather-section">
                 <div class="weather-toggle-list" role="group" aria-label="Weather overlays">
                     <label class="weather-toggle">
-                        <input type="checkbox" id="weather-toggle-temp" disabled>
-                        <span>Temperature</span>
+                        <input type="checkbox" id="weather-toggle-type" disabled>
+                        <span>Weather type</span>
                     </label>
+
+                    <label class="weather-toggle">
+                        <input type="checkbox" id="weather-toggle-clouds" disabled>
+                        <span>Clouds</span>
+                    </label>
+
                     <label class="weather-toggle">
                         <input type="checkbox" id="weather-toggle-wind" disabled>
                         <span>Wind direction</span>
                     </label>
                     <label class="weather-toggle">
-                        <input type="checkbox" id="weather-toggle-clouds" disabled>
-                        <span>Clouds</span>
+                        <input type="checkbox" id="weather-toggle-temp" disabled>
+                        <span>Temperature</span>
                     </label>
-                    <label class="weather-toggle">
-                        <input type="checkbox" id="weather-toggle-type" disabled>
-                        <span>Weather type</span>
-                    </label>
+
+
                 </div>
             </div>
-            <div class="weather-section">
-                <label class="weather-toggle">
-                    <input type="checkbox" id="weather-toggle-debug" disabled>
-                    <span>Show debug data</span>
+
+            <div class="marker-row">
+               <label for="weather-wind-altitude">Altitude:</label>
                 </label>
-            </div>
-            <div class="weather-section">
-                <label class="weather-wind-select">
-                    <span>Wind layer</span>
-                    <select id="weather-wind-altitude" disabled>
+                <select id="weather-wind-altitude" disabled class="glass-select marker-select">
                     <option value="0">Surface</option>
                     <option value="1">3 kft</option>
                     <option value="2">6 kft</option>
@@ -288,9 +307,16 @@
                     <option value="8">40 kft</option>
                     <option value="9">50 kft</option>
                 </select>
-            </label>
+                
             </div>
-            <div id="weather-status" class="weather-status" aria-live="polite">No weather imported</div>
+            <div class="weather-section weather-action-footer">
+                <label class="weather-toggle">
+                    <input type="checkbox" id="weather-toggle-debug" disabled>
+                    <span>Show debug data</span>
+                </label>
+                <div id="weather-status" class="weather-status" aria-live="polite">No weather imported</div>
+            </div>
+
         </div>
     </div>
 
@@ -525,7 +551,7 @@
             const settings = {
                 Korea: { size: 16384, center: [8192, 8192], zoom: 2, scale: 0.004876, aip: 'aip_korea.json' },
                 Israel: { size: 8192, center: [4096, 4096], zoom: 2, scale: 0.002438, aip: 'aip_israel.json' },
-                Balkans: { size: 16384, center: [8192, 8192], zoom: 2, scale: 0.004876, aip: 'aip_balkans.json'}
+                Balkans: { size: 16384, center: [8192, 8192], zoom: 2, scale: 0.004876, aip: 'aip_balkans.json' }
             };
             return settings[theater] || settings.Korea;
         }
@@ -591,11 +617,11 @@
                 }
             });
 
-           
+
             if (currentSettings.aip) {
                 loadAirportIcons(`${theater}/${currentSettings.aip}`, map);
             }
-            
+
             // Init tools
             addINILoaderUI(map);
 
@@ -742,17 +768,17 @@
         document.addEventListener('keydown', e => {
             if (/input|textarea/i.test(e.target.tagName)) return;
 
-                const shortcuts = {
-                    q: 'whiteboard-pencil',
-                    w: 'whiteboard-polygon',
-                    e: 'whiteboard-circle',
-                    r: 'whiteboard-rect',
-                    t: 'whiteboard-text',
-                    c: 'whiteboard-eraser',
-                    l: 'ruler-button',
-                    z: 'whiteboard-undo',
-                    y: 'whiteboard-redo'
-                };
+            const shortcuts = {
+                q: 'whiteboard-pencil',
+                w: 'whiteboard-polygon',
+                e: 'whiteboard-circle',
+                r: 'whiteboard-rect',
+                t: 'whiteboard-text',
+                c: 'whiteboard-eraser',
+                l: 'ruler-button',
+                z: 'whiteboard-undo',
+                y: 'whiteboard-redo'
+            };
 
             const id = shortcuts[e.key.toLowerCase()];
             if (id) document.getElementById(id)?.click();
