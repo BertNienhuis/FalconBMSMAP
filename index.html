@@ -266,6 +266,9 @@
                 <button id="weather-clear" class="button" type="button" title="Remove imported weather" disabled>
                     <i data-lucide="cloud-off"></i> Clear weather
                 </button>
+                <button id="weather-export" class="button" type="button" title="Export current weather" disabled>
+                    <i data-lucide="cloud-download"></i> Export weather
+                </button>
             </div>
             <div class="weather-section">
                 <div class="weather-toggle-list" role="group" aria-label="Weather overlays">
@@ -309,6 +312,43 @@
                 </select>
                 
             </div>
+            <div class="weather-section weather-download-section">
+                <div class="weather-download-header">
+                    <div>
+                        <div class="weather-download-label">Download real weather</div>
+                        <div class="weather-download-hint">NOAA GFS </div>
+                    </div>
+                    <button id="weather-download" class="button" type="button" disabled>
+                        <i data-lucide="cloud-lightning"></i> Download weather
+                    </button>
+                </div>
+                <div class="weather-download-controls">
+                    <label>
+                        <span>Date (UTC)</span>
+                        <input type="date" id="weather-gfs-date" class="glass-select marker-select" disabled>
+                    </label>
+                    <label>
+                        <span>Cycle</span>
+                        <select id="weather-gfs-cycle" disabled class="glass-select marker-select">
+                            <option value="00">00z</option>
+                            <option value="06">06z</option>
+                            <option value="12">12z</option>
+                            <option value="18">18z</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Forecast</span>
+                        <select id="weather-gfs-hour" disabled class="glass-select marker-select">
+                            <option value="0">+0h</option>
+                            <option value="3">+3h</option>
+                            <option value="6">+6h</option>
+                            <option value="9">+9h</option>
+                            <option value="12">+12h</option>
+                            <option value="24">+24h</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
             <div class="weather-section weather-action-footer">
                 <label class="weather-toggle">
                     <input type="checkbox" id="weather-toggle-debug" disabled>
@@ -330,6 +370,7 @@
     <script src="bms-marker-layer.js"></script>
     <script src="bms-bullseye.js"></script>
     <script src="bms-export-import.js"></script>
+    <script src="gfs-weather-loader.js"></script>
     <script src="bms-weather-layer.js"></script>
 
 
@@ -337,6 +378,11 @@
         let map, tileLayer;
         let currentTheater = 'Korea';
         let currentSettings = getTheaterSettings(currentTheater);
+        const THEATER_BOUNDS = {
+            Korea: { top: 44, bottom: 31, left: 122, right: 136 },
+            Israel: { top: 37, bottom: 27, left: 30, right: 40 },
+            Balkans: { top: 47, bottom: 34, left: 16, right: 30 }
+        };
         const tileSize = 256;
         let dragPanInteraction = null;
         let isWhiteboardToolbarVisible = false;
@@ -346,6 +392,8 @@
         let pdfViewerInstance = null;
         window.getCurrentScale = () => currentSettings.scale;
         window.getCurrentTheaterSettings = () => currentSettings;
+        window.getCurrentTheater = () => currentTheater;
+        window.getCurrentTheaterBounds = () => THEATER_BOUNDS[currentTheater] || THEATER_BOUNDS.Korea;
         const controlWrapper = document.getElementById('control-wrapper');
         const toolbarToggle = document.getElementById('control-toggle');
         const toggleIcon = document.getElementById('control-toggle-icon');

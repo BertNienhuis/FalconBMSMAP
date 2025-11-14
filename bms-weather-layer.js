@@ -306,6 +306,8 @@
             this.debugElement = null;
             this.debugPointerMoveHandler = null;
             this.debugMouseLeaveHandler = null;
+            this.originalBuffer = null;
+            this.downloadInProgress = false;
 
             this.layers = {
                 weatherType: new ol.layer.Vector({
@@ -338,6 +340,11 @@
             this.ui = {
                 fileInput: null,
                 clearButton: null,
+                exportButton: null,
+                downloadButton: null,
+                gfsDateInput: null,
+                gfsCycleInput: null,
+                gfsHourInput: null,
                 status: null,
                 toggles: {},
                 windSelect: null,
@@ -366,6 +373,11 @@
 
             this.ui.fileInput = document.getElementById('weather-loader');
             this.ui.clearButton = document.getElementById('weather-clear');
+            this.ui.exportButton = document.getElementById('weather-export');
+            this.ui.downloadButton = document.getElementById('weather-download');
+            this.ui.gfsDateInput = document.getElementById('weather-gfs-date');
+            this.ui.gfsCycleInput = document.getElementById('weather-gfs-cycle');
+            this.ui.gfsHourInput = document.getElementById('weather-gfs-hour');
             this.ui.status = document.getElementById('weather-status');
             this.ui.toggles.temperature = document.getElementById('weather-toggle-temp');
             this.ui.toggles.wind = document.getElementById('weather-toggle-wind');
@@ -396,6 +408,8 @@
             });
 
             this.ui.clearButton?.addEventListener('click', () => this.clear(true));
+            this.ui.exportButton?.addEventListener('click', () => this.exportFmap());
+            this.ui.downloadButton?.addEventListener('click', () => this.handleDownloadWeather());
 
             Object.entries(this.ui.toggles).forEach(([key, input]) => {
                 input?.addEventListener('change', (event) => {
@@ -418,6 +432,7 @@
             this.toggleControls(false);
             this.updateStatus('No weather imported');
             this.uiBound = true;
+            this.initializeDownloadControls();
         }
 
         forEachLayer(callback) {
@@ -449,6 +464,7 @@
         toggleControls(enabled) {
             const inputs = [
                 this.ui.clearButton,
+                this.ui.exportButton,
                 this.ui.windSelect,
                 ...Object.values(this.ui.toggles),
                 this.ui.debugToggle
@@ -491,6 +507,7 @@
             });
             this.data = null;
             this.filename = '';
+            this.originalBuffer = null;
             if (typeof window !== 'undefined') {
                 window.fmap = null;
             }
@@ -503,7 +520,15 @@
         }
 
         loadFromArrayBuffer(buffer, filename) {
-            const parsed = parseFmap(buffer);
+            const sourceBuffer = buffer instanceof ArrayBuffer
+                ? buffer
+                : buffer?.buffer;
+            if (!(sourceBuffer instanceof ArrayBuffer)) {
+                throw new Error('Invalid FMAP buffer');
+            }
+
+            this.originalBuffer = sourceBuffer.slice(0);
+            const parsed = parseFmap(this.originalBuffer);
             this.data = parsed;
             if (parsed.fmap && filename) {
                 const inferredTime = this.extractTimeFromFilename(filename);
@@ -529,6 +554,329 @@
 
             const info = `${parsed.columns}x${parsed.rows} grid (${filename})`;
             this.updateStatus(`Loaded ${info}`);
+        }
+
+        getVersionOffset(key, version) {
+            const table = VERSION_DATA_OFFSETS[key];
+            if (!table || !table.length) return 0;
+            const normalized = Number.isFinite(version) ? Math.round(version) : 0;
+            const index = clamp(normalized, 0, table.length - 1);
+            return table[index] || 0;
+        }
+
+        createFmapBuffer(sourceData) {
+            const dataSource = sourceData || this.data;
+            if (!dataSource?.fmap) return null;
+            const fmap = dataSource.fmap;
+
+            const columns = Number.isFinite(dataSource.columns)
+                ? Math.trunc(dataSource.columns)
+                : Math.trunc(fmap.dimension?.x ?? this.data?.columns ?? 0);
+            const rows = Number.isFinite(dataSource.rows)
+                ? Math.trunc(dataSource.rows)
+                : Math.trunc(fmap.dimension?.y ?? this.data?.rows ?? 0);
+            if (!Number.isFinite(columns) || !Number.isFinite(rows) || columns <= 0 || rows <= 0) {
+                return null;
+            }
+
+            const totalCells = columns * rows;
+            const valuesPerCell = WIND_ALTITUDES_FT.length;
+            const version = Number.isFinite(dataSource.version)
+                ? Math.trunc(dataSource.version)
+                : Math.trunc(fmap.version ?? 0);
+            const nodeCount = Number.isFinite(dataSource.nodeCount)
+                ? Math.trunc(dataSource.nodeCount)
+                : totalCells;
+            const scaler = Number.isFinite(dataSource.cellSpacingKm)
+                ? dataSource.cellSpacingKm
+                : fmap.scaler;
+            const anchorValues = Array.isArray(dataSource.anchor) ? dataSource.anchor : [];
+
+            const showerOffset = this.getVersionOffset('shower', version);
+            const visibilityOffset = this.getVersionOffset('visibility', version);
+            const fogOffset = this.getVersionOffset('fog', version);
+
+            const offsetsToMeasure = [
+                { offset: FMAP_LAYER_OFFSETS.weatherType, length: totalCells },
+                { offset: FMAP_LAYER_OFFSETS.pressure, length: totalCells },
+                { offset: FMAP_LAYER_OFFSETS.temperature, length: totalCells },
+                { offset: FMAP_LAYER_OFFSETS.windSpeed, length: totalCells * valuesPerCell },
+                { offset: FMAP_LAYER_OFFSETS.windDirection, length: totalCells * valuesPerCell },
+                { offset: FMAP_LAYER_OFFSETS.cloudBase, length: totalCells },
+                { offset: FMAP_LAYER_OFFSETS.cloudCover, length: totalCells },
+                { offset: FMAP_LAYER_OFFSETS.cloudSize, length: totalCells },
+                { offset: FMAP_LAYER_OFFSETS.cloudType, length: totalCells }
+            ];
+
+            [showerOffset, visibilityOffset, fogOffset].forEach(offset => {
+                if (offset > 0) {
+                    offsetsToMeasure.push({ offset, length: totalCells });
+                }
+            });
+
+            let requiredUnits = FMAP_LAYER_OFFSETS.weatherType;
+            offsetsToMeasure.forEach(({ offset, length }) => {
+                if (Number.isFinite(offset) && offset > 0) {
+                    requiredUnits = Math.max(requiredUnits, offset + length);
+                }
+            });
+
+            const buffer = new ArrayBuffer(requiredUnits * 4);
+            const view = new DataView(buffer);
+            let headerOffset = 0;
+            const writeInt32 = (value) => {
+                const normalized = Number.isFinite(value) ? Math.trunc(value) : 0;
+                view.setInt32(headerOffset, normalized, true);
+                headerOffset += 4;
+            };
+            const writeFloat32 = (value) => {
+                const normalized = Number.isFinite(value) ? value : 0;
+                view.setFloat32(headerOffset, normalized, true);
+                headerOffset += 4;
+            };
+
+            writeInt32(version);
+            writeInt32(columns);
+            writeInt32(rows);
+            writeInt32(nodeCount);
+            writeFloat32(Number.isFinite(scaler) ? scaler : 0);
+            for (let i = 0; i < 6; i += 1) {
+                writeInt32(Number(anchorValues[i]) || 0);
+            }
+
+            const int32Array = new Int32Array(buffer);
+            const uint32Array = new Uint32Array(buffer);
+            const float32Array = new Float32Array(buffer);
+
+            const getGridValue = (grid, row, col) => grid?.[row]?.[col];
+            const toFloat = (value) => {
+                const asNumber = Number(value ?? 0);
+                return Number.isNaN(asNumber) ? 0 : asNumber;
+            };
+            const toInt = (value) => {
+                const asNumber = Number(value ?? 0);
+                return Number.isNaN(asNumber) ? 0 : Math.trunc(asNumber);
+            };
+            const toUInt = (value) => {
+                const asNumber = Number(value ?? 0);
+                if (!Number.isFinite(asNumber) || asNumber < 0) return 0;
+                return Math.trunc(asNumber);
+            };
+
+            for (let row = 0; row < rows; row += 1) {
+                for (let col = 0; col < columns; col += 1) {
+                    const idx = row * columns + col;
+                    int32Array[FMAP_LAYER_OFFSETS.weatherType + idx] = toInt(getGridValue(fmap.type, row, col));
+                    float32Array[FMAP_LAYER_OFFSETS.pressure + idx] = toFloat(getGridValue(fmap.pressure, row, col));
+                    float32Array[FMAP_LAYER_OFFSETS.temperature + idx] = toFloat(getGridValue(fmap.temperature, row, col));
+
+                    const windSlot = fmap.wind?.[row]?.[col] || [];
+                    const windSpeedStart = FMAP_LAYER_OFFSETS.windSpeed + (idx * valuesPerCell);
+                    const windDirStart = FMAP_LAYER_OFFSETS.windDirection + (idx * valuesPerCell);
+                    for (let alt = 0; alt < valuesPerCell; alt += 1) {
+                        const entry = windSlot[alt];
+                        float32Array[windSpeedStart + alt] = toFloat(entry?.speed);
+                        float32Array[windDirStart + alt] = toFloat(entry?.direction);
+                    }
+
+                    float32Array[FMAP_LAYER_OFFSETS.cloudBase + idx] = toFloat(getGridValue(fmap.cloud?.base, row, col));
+                    uint32Array[FMAP_LAYER_OFFSETS.cloudCover + idx] = toUInt(getGridValue(fmap.cloud?.cover, row, col));
+                    float32Array[FMAP_LAYER_OFFSETS.cloudSize + idx] = toFloat(getGridValue(fmap.cloud?.size, row, col));
+                    uint32Array[FMAP_LAYER_OFFSETS.cloudType + idx] = toUInt(getGridValue(fmap.cloud?.type, row, col));
+
+                    if (showerOffset > 0) {
+                        uint32Array[showerOffset + idx] = toUInt(getGridValue(fmap.shower, row, col));
+                    }
+                    if (visibilityOffset > 0) {
+                        float32Array[visibilityOffset + idx] = toFloat(getGridValue(fmap.visibility, row, col));
+                    }
+                    if (fogOffset > 0) {
+                        float32Array[fogOffset + idx] = toFloat(getGridValue(fmap.fog, row, col));
+                    }
+                }
+            }
+
+            return buffer;
+        }
+
+        buildExportFilename(prefix = '') {
+            const existing = (this.filename || '').trim();
+            if (existing) {
+                const normalized = existing.toLowerCase();
+                if (normalized.endsWith('.fmap')) return existing;
+                return `${existing}.fmap`;
+            }
+            const label = (this.data?.fmap?.time || '').trim();
+            if (label) {
+                const slug = label.replace(/\s+/g, '_');
+                return `${slug}.fmap`;
+            }
+            const base = prefix ? `${prefix}-weather` : 'weather-export';
+            return `${base}.fmap`;
+        }
+
+        downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        exportFmap() {
+            if (!this.data?.fmap) {
+                this.updateStatus('No weather data to export.', true);
+                return;
+            }
+            try {
+                const buffer = this.createFmapBuffer();
+                if (!buffer) {
+                    this.updateStatus('Unable to build .fmap file.', true);
+                    return;
+                }
+                const blob = new Blob([buffer], { type: 'application/octet-stream' });
+                const filename = this.buildExportFilename();
+                this.downloadBlob(blob, filename);
+                this.updateStatus(`Exported ${filename}`);
+            } catch (error) {
+                console.error('FMAP export failed:', error);
+                this.updateStatus('Unable to export .fmap file.', true);
+            }
+        }
+
+        initializeDownloadControls() {
+            const today = this.getUtcDateString(0);
+            const sevenDaysAgo = this.getUtcDateString(-7);
+            const dateStr = this.getDefaultGfsDate();
+            if (this.ui.gfsDateInput) {
+                this.ui.gfsDateInput.value = dateStr;
+                this.ui.gfsDateInput.max = today;
+                this.ui.gfsDateInput.min = sevenDaysAgo;
+                this.ui.gfsDateInput.disabled = false;
+            }
+            const cycle = this.getSuggestedCycle();
+            if (this.ui.gfsCycleInput) {
+                this.ui.gfsCycleInput.value = cycle;
+                this.ui.gfsCycleInput.disabled = false;
+            }
+            if (this.ui.gfsHourInput) {
+                this.ui.gfsHourInput.value = '0';
+                this.ui.gfsHourInput.disabled = false;
+            }
+            if (this.ui.downloadButton) {
+                this.ui.downloadButton.disabled = false;
+            }
+            this.setDownloadBusy(false);
+        }
+
+        getUtcDateString(offsetDays = 0) {
+            const date = new Date();
+            if (offsetDays !== 0) {
+                date.setUTCDate(date.getUTCDate() + offsetDays);
+            }
+            const year = date.getUTCFullYear();
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        getDefaultGfsDate() {
+            return this.getUtcDateString(0);
+        }
+
+        getSuggestedCycle() {
+            const hour = new Date().getUTCHours();
+            if (hour >= 18) return '18';
+            if (hour >= 12) return '12';
+            if (hour >= 6) return '06';
+            return '00';
+        }
+
+        setDownloadBusy(isBusy) {
+            this.downloadInProgress = isBusy;
+            if (this.ui.downloadButton) {
+                this.ui.downloadButton.disabled = isBusy;
+                this.ui.downloadButton.classList.toggle('is-busy', isBusy);
+            }
+        }
+
+        clampGfsDate(dateStr) {
+            const fallback = this.getDefaultGfsDate();
+            if (!dateStr) return fallback;
+            const parsed = this.parseIsoDate(dateStr) || this.parseIsoDate(fallback);
+            const maxDate = this.parseIsoDate(this.getUtcDateString(0));
+            const minDate = this.parseIsoDate(this.getUtcDateString(-7));
+            if (!parsed || !maxDate || !minDate) return fallback;
+            if (parsed > maxDate) return this.getUtcDateString(0);
+            if (parsed < minDate) return this.getUtcDateString(-7);
+            return this.formatIsoDate(parsed);
+        }
+
+        parseIsoDate(dateStr) {
+            if (!dateStr) return null;
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return null;
+            const [yearStr, monthStr, dayStr] = parts;
+            const year = Number(yearStr);
+            const month = Number(monthStr);
+            const day = Number(dayStr);
+            if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+            const date = new Date(Date.UTC(year, month - 1, day));
+            if (Number.isNaN(date.getTime())) return null;
+            return date;
+        }
+
+        formatIsoDate(date) {
+            const year = date.getUTCFullYear();
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        async handleDownloadWeather() {
+            if (this.downloadInProgress) return;
+            if (typeof window.fetchGfsFmap !== 'function') {
+                this.updateStatus('GFS downloader unavailable.', true);
+                return;
+            }
+            const bounds = window.getCurrentTheaterBounds?.();
+            if (!bounds) {
+                this.updateStatus('No theater bounds available.', true);
+                return;
+            }
+            const rawDate = this.ui.gfsDateInput?.value || this.getDefaultGfsDate();
+            const clampedDate = this.clampGfsDate(rawDate);
+            if (this.ui.gfsDateInput) {
+                this.ui.gfsDateInput.value = clampedDate;
+            }
+            const cycle = this.ui.gfsCycleInput?.value || this.getSuggestedCycle();
+            const forecastHour = Number(this.ui.gfsHourInput?.value || 0);
+
+            try {
+                this.setDownloadBusy(true);
+                this.updateStatus('Fetching NOAA GFS data…');
+                const product = await window.fetchGfsFmap({
+                    date: clampedDate.replace(/-/g, ''),
+                    cycle,
+                    forecastHour,
+                    bounds
+                });
+                if (!product?.fmap) {
+                    throw new Error('Incomplete GFS response');
+                }
+                const buffer = this.createFmapBuffer(product);
+                if (!buffer) {
+                    throw new Error('Unable to convert GFS data');
+                }
+                this.loadFromArrayBuffer(buffer, product.filename || 'gfs-weather.fmap');
+            } catch (error) {
+                console.error('GFS download failed:', error);
+                const message = error?.message ? `Failed to download weather: ${error.message}` : 'Failed to download weather.';
+                this.updateStatus(message, true);
+            } finally {
+                this.setDownloadBusy(false);
+            }
         }
 
         buildFeatures() {

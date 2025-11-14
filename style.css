@@ -1058,9 +1058,14 @@ canvas {
     background: #2563eb;
 }
 
+#control-wrapper .map-select,
+#control-wrapper #airport-search {
+    max-width: 100%;
+}
 
 #airport-search {
-    width: 130px;
+    width: 136px !important;
+    box-sizing: border-box;
     padding: 6px 10px;
     border: 1px solid rgba(255, 255, 255, 0.35);
     border-radius: 8px;
@@ -1114,18 +1119,8 @@ canvas {
     width: 136px;
 }
 
-#airport-search {
-    width: 136px !important;
-    box-sizing: border-box;
-}
-
-#control-wrapper .map-select,
-#control-wrapper #airport-search {
-    max-width: 100%;
-}
-
 .weather-panel .button {
-    width: 100%;
+    width: 60%;
 }
 
 .weather-action-row {
@@ -1184,6 +1179,58 @@ canvas {
     min-height: 34px;
 }
 
+.weather-download-section {
+    margin-top: 12px;
+    padding: 10px 0;
+    border-top: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.weather-download-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.weather-download-controls {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.weather-download-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.weather-download-controls label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: #0f172a;
+}
+
+.weather-download-controls input[type="date"],
+.weather-download-controls select {
+    border-radius: 6px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(255, 255, 255, 0.85);
+    color: #0f172a;
+    padding: 4px 8px;
+    min-height: 34px;
+}
+
+.weather-download-hint {
+    font-size: 0.75rem;
+    color: #475569;
+}
+
+.weather-status {
+    font-size: 0.8rem;
+    color: #0f172a;
+}
 .weather-status {
     font-size: 0.8rem;
     color: #0f172a;
@@ -1218,10 +1265,6 @@ canvas {
     width: 90px;
     color: #bfdbfe;
 }
-
-
-
-
 
 
 
