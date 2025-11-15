@@ -5,7 +5,7 @@
     const GFS_PROXY = 'https://corsproxy.io/?';
     const GFS_LEVELS = '&lev_100_mb=on&lev_150_mb=on&lev_200_mb=on&lev_300_mb=on&lev_400_mb=on&lev_500_mb=on&lev_650_mb=on&lev_700_mb=on&lev_850_mb=on&lev_925_mb=on&lev_2_m_above_ground=on&lev_10_m_above_ground=on&lev_convective_cloud_layer=on&lev_high_cloud_layer=on&lev_low_cloud_layer=on&lev_mean_sea_level=on&lev_middle_cloud_layer=on&lev_surface=on&lev_convective_cloud_bottom_level=on&lev_convective_cloud_top_level=on&lev_high_cloud_bottom_level=on&lev_high_cloud_top_level=on&lev_low_cloud_bottom_level=on&lev_low_cloud_top_level=on&lev_middle_cloud_bottom_level=on&lev_middle_cloud_top_level=on';
     const GFS_PARAMS = '&var_ACPCP=on&var_APCP=on&var_PRATE=on&var_PRMSL=on&var_TCDC=on&var_TMP=on&var_UGRD=on&var_VGRD=on&var_VIS=on&var_PRES=on&var_HGT=on';
-    const GFS_SAVE_RAW_GRIB = true;
+    const GFS_SAVE_RAW_GRIB = false; // set true for debug to capture raw GRIB payloads
     const CLOUD_TYPE_THRESHOLDS = [2, 4, 6];
     const CLOUD_MIN_DEPTH_FT = 500;
     const CLOUD_BOTTOM_TYPES = new Set([212, 222, 232, 242]);
