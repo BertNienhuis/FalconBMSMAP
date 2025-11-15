@@ -4,7 +4,12 @@
     const GFS_ENDPOINT = 'https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?';
     const GFS_PROXY = 'https://corsproxy.io/?';
     const GFS_LEVELS = '&lev_100_mb=on&lev_150_mb=on&lev_200_mb=on&lev_300_mb=on&lev_400_mb=on&lev_500_mb=on&lev_650_mb=on&lev_700_mb=on&lev_850_mb=on&lev_925_mb=on&lev_2_m_above_ground=on&lev_10_m_above_ground=on&lev_convective_cloud_layer=on&lev_high_cloud_layer=on&lev_low_cloud_layer=on&lev_mean_sea_level=on&lev_middle_cloud_layer=on&lev_surface=on&lev_convective_cloud_bottom_level=on&lev_convective_cloud_top_level=on&lev_high_cloud_bottom_level=on&lev_high_cloud_top_level=on&lev_low_cloud_bottom_level=on&lev_low_cloud_top_level=on&lev_middle_cloud_bottom_level=on&lev_middle_cloud_top_level=on';
-    const GFS_PARAMS = '&var_ACPCP=on&var_APCP=on&var_PRATE=on&var_PRMSL=on&var_TCDC=on&var_TMP=on&var_UGRD=on&var_VGRD=on&var_VIS=on&var_PRES=on';
+    const GFS_PARAMS = '&var_ACPCP=on&var_APCP=on&var_PRATE=on&var_PRMSL=on&var_TCDC=on&var_TMP=on&var_UGRD=on&var_VGRD=on&var_VIS=on&var_PRES=on&var_HGT=on';
+    const GFS_SAVE_RAW_GRIB = true;
+    const CLOUD_TYPE_THRESHOLDS = [2, 4, 6];
+    const CLOUD_MIN_DEPTH_FT = 500;
+    const CLOUD_BOTTOM_TYPES = new Set([212, 222, 232, 242]);
+    const CLOUD_TOP_TYPES = new Set([213, 223, 233, 243]);
 
     const MSG_TYPES = {
         TMP: 0,
@@ -14,6 +19,7 @@
         UGRD: 514,
         VGRD: 515,
         PRES: 768,
+        HGT: 773,
         PRMSL: 769,
         TCDC: 1537,
         VIS: 4864,
@@ -93,6 +99,95 @@
         const subregion = getSubregion(bounds);
         const filter = `dir=${dir}&file=${file}${GFS_PARAMS}${GFS_LEVELS}${subregion}`;
         return `${GFS_ENDPOINT}${filter}`;
+    }
+
+    function buildForecastBasename(date, cycle, forecastHour) {
+        const safeDate = date || '00000000';
+        const safeCycle = cycle || '00';
+        const hour = pad(forecastHour, 3);
+        return `gfs-${safeDate}-${safeCycle}z-f${hour}`;
+    }
+
+    function resolveLevelValue(field) {
+        if (!field) return null;
+        const rawValue = Number(field.level);
+        if (!Number.isFinite(rawValue)) return null;
+        const factor = Number.isFinite(field.levelFactor) ? field.levelFactor : 0;
+        const scale = 10 ** (-factor);
+        return rawValue * scale;
+    }
+
+    function altitudeFromLevel(field, y, x) {
+        if (!field) return null;
+        const levelType = field.levelType;
+        const levelValue = resolveLevelValue(field);
+        if (!Number.isFinite(levelType) || !Number.isFinite(levelValue)) return null;
+        if (levelType === 100) {
+            const prmslRow = fmap.pressure[y];
+            const tempRow = fmap.temperature[y];
+            if (!prmslRow) return null;
+            const prmsl = prmslRow[x];
+            const surfTemp = tempRow ? tempRow[x] : 15;
+            if (!Number.isFinite(prmsl) || prmsl <= 0) return null;
+            const tempValue = Number.isFinite(surfTemp) ? surfTemp : 15;
+            return altFromPres(prmsl * 100, levelValue, tempValue);
+        }
+        if (levelType === 103 || levelType === 104) {
+            return levelValue * 3.28084;
+        }
+        return null;
+    }
+
+    function classifyCloudType(coverage) {
+        if (!Number.isFinite(coverage)) return 0;
+        if (coverage > CLOUD_TYPE_THRESHOLDS[2]) return 4;
+        if (coverage > CLOUD_TYPE_THRESHOLDS[1]) return 3;
+        if (coverage > CLOUD_TYPE_THRESHOLDS[0]) return 2;
+        return coverage > 0 ? 1 : 0;
+    }
+
+    function updateCloudThickness(y, x) {
+        const base = fmap.cloud.base[y][x];
+        const top = fmap.cloud.top[y][x];
+        if (Number.isFinite(base) && base > 0 && Number.isFinite(top) && top > base) {
+            const depthFt = Math.max(CLOUD_MIN_DEPTH_FT, top - base);
+            fmap.cloud.size[y][x] = depthFt / 1000;
+        } else {
+            fmap.cloud.size[y][x] = 0;
+        }
+    }
+
+    async function saveRawGribPayload(buffer, filename) {
+        if (!GFS_SAVE_RAW_GRIB) return;
+        if (typeof window === 'undefined') return;
+        try {
+            const blob = new Blob([buffer], { type: 'application/octet-stream' });
+            if (typeof window.showSaveFilePicker === 'function') {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: filename,
+                    types: [{
+                        description: 'GRIB2 files',
+                        accept: { 'application/octet-stream': ['.grib2', '.grb2', '.grb'] }
+                    }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+                return;
+            }
+            if (typeof document === 'undefined') return;
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = filename;
+            anchor.style.display = 'none';
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.warn('Unable to save raw GFS payload', error);
+        }
     }
 
     async function fetchWithFallback(url) {
@@ -469,6 +564,8 @@
     function decodeMsg(name, bufferField) {
         bufferField.name = name;
         bufferField.level = gfsMsg.s4.def.surface1_value;
+        bufferField.levelFactor = gfsMsg.s4.def.surface1_factor;
+        bufferField.levelType = gfsMsg.s4.def.surface1_type;
         bufferField.data = Array.from({ length: gfsMsg.s3.num_points }, (_, i) => decodeSimplePacking(i));
     }
 
@@ -547,7 +644,6 @@
     }
 
     function transcodeCloudCoverage() {
-        if (gfsFields.tcdc.level < 20000) return;
         const scaleY = gfsMsg.s3.def.Nj / fmap.dimension.y;
         const scaleX = gfsMsg.s3.def.Ni / fmap.dimension.x;
 
@@ -557,14 +653,59 @@
                 const gx = (x * scaleX) >> 0;
                 const idx = gy * gfsMsg.s3.def.Ni + gx;
                 const coverage = Math.round(gfsFields.tcdc.data[idx] * gfsFields.tcdc.scale);
-                if (coverage >= fmap.cloud.cover[y][x]) {
+                if (coverage > fmap.cloud.cover[y][x]) {
                     fmap.cloud.cover[y][x] = coverage;
                 }
-                if (coverage > 6 && fmap.cloud.size[y][x] > 1) {
-                    fmap.cloud.size[y][x] -= 1;
+                const cloudType = classifyCloudType(coverage);
+                if (cloudType > fmap.cloud.type[y][x]) {
+                    fmap.cloud.type[y][x] = cloudType;
                 }
-                if (fmap.cloud.size[y][x] === 1) {
-                    fmap.cloud.type[y][x] = 1;
+                if (coverage <= CLOUD_TYPE_THRESHOLDS[0]) continue;
+                const altitudeFt = altitudeFromLevel(gfsFields.tcdc, y, x);
+                if (!Number.isFinite(altitudeFt) || altitudeFt <= 0) continue;
+                const currentBase = fmap.cloud.base[y][x];
+                if (!Number.isFinite(currentBase) || currentBase <= 0 || altitudeFt < currentBase) {
+                    fmap.cloud.base[y][x] = altitudeFt;
+                }
+                const currentTop = fmap.cloud.top[y][x];
+                if (!Number.isFinite(currentTop) || altitudeFt > currentTop) {
+                    fmap.cloud.top[y][x] = altitudeFt;
+                }
+                updateCloudThickness(y, x);
+            }
+        }
+    }
+
+    function transcodeCloudHeights() {
+        const levelType = gfsMsg.s4.def.surface1_type;
+        const isBottom = CLOUD_BOTTOM_TYPES.has(levelType);
+        const isTop = CLOUD_TOP_TYPES.has(levelType);
+        if (!isBottom && !isTop) return;
+        const scaleY = gfsMsg.s3.def.Nj / fmap.dimension.y;
+        const scaleX = gfsMsg.s3.def.Ni / fmap.dimension.x;
+
+        for (let y = 0; y < fmap.dimension.y; y += 1) {
+            for (let x = 0; x < fmap.dimension.x; x += 1) {
+                const gy = ((fmap.dimension.y - 1 - y) * scaleY) >> 0;
+                const gx = (x * scaleX) >> 0;
+                const idx = gy * gfsMsg.s3.def.Ni + gx;
+                const meters = gfsFields.hgt.data[idx] * (gfsFields.hgt.scale || 1) + (gfsFields.hgt.offset || 0);
+                if (!Number.isFinite(meters) || meters <= 0) continue;
+                const heightFt = meters * 3.28084;
+                if (isBottom) {
+                    const currentBase = fmap.cloud.base[y][x];
+                    if (!Number.isFinite(currentBase) || currentBase <= 0 || heightFt < currentBase) {
+                        fmap.cloud.base[y][x] = heightFt;
+                    }
+                }
+                if (isTop) {
+                    const currentTop = fmap.cloud.top[y][x];
+                    if (!Number.isFinite(currentTop) || heightFt > currentTop) {
+                        fmap.cloud.top[y][x] = heightFt;
+                    }
+                }
+                if (isBottom || isTop) {
+                    updateCloudThickness(y, x);
                 }
             }
         }
@@ -594,25 +735,6 @@
         const adjustedTemp = presToTemp(pres / 100) + 273.15 + (15 - surfTemp);
         const alt = (Math.log(pres / prmsl) * R * adjustedTemp) / (-g * M);
         return alt * 3.28084;
-    }
-
-    function transcodeCloudBase() {
-        if (gfsMsg.s4.def.surface1_type !== 242) return;
-        const scaleY = gfsMsg.s3.def.Nj / fmap.dimension.y;
-        const scaleX = gfsMsg.s3.def.Ni / fmap.dimension.x;
-
-        for (let y = 0; y < fmap.dimension.y; y += 1) {
-            for (let x = 0; x < fmap.dimension.x; x += 1) {
-                const gy = ((fmap.dimension.y - 1 - y) * scaleY) >> 0;
-                const gx = (x * scaleX) >> 0;
-                const idx = gy * gfsMsg.s3.def.Ni + gx;
-                fmap.cloud.base[y][x] = altFromPres(
-                    fmap.pressure[y][x] * 100,
-                    gfsFields.pres.data[idx],
-                    fmap.temperature[y][x]
-                );
-            }
-        }
     }
 
     function transcodeFogAltitude() {
@@ -696,7 +818,6 @@
                 gfsFields.prmsl.data = [];
                 break;
             case MSG_TYPES.VIS:
-                if (gfsMsg.s4.def.surface1_value !== 0) return;
                 decodeMsg('VIS', gfsFields.vis);
                 transcodeMsg('VIS', gfsFields.vis, fmap.visibility);
                 gfsFields.vis.data = [];
@@ -723,9 +844,13 @@
                 break;
             case MSG_TYPES.PRES:
                 decodeMsg('PRES', gfsFields.pres);
-                transcodeCloudBase();
                 transcodeFogAltitude();
                 gfsFields.pres.data = [];
+                break;
+            case MSG_TYPES.HGT:
+                decodeMsg('HGT', gfsFields.hgt);
+                transcodeCloudHeights();
+                gfsFields.hgt.data = [];
                 break;
             case MSG_TYPES.PRATE:
                 decodeMsg('PRATE', gfsFields.prate);
@@ -790,6 +915,7 @@
             wind: [],
             cloud: {
                 base: [],
+                top: [],
                 cover: [],
                 size: [],
                 type: []
@@ -813,8 +939,9 @@
         initFmap2D(fmap.fog);
         initFmap2D(fmap.shower);
         initFmap2D(fmap.cloud.base);
+        initFmap2D(fmap.cloud.top);
         initFmap2D(fmap.cloud.cover);
-        setFmap2D(fmap.cloud.size, 5);
+        initFmap2D(fmap.cloud.size);
         initFmap2D(fmap.cloud.type);
         createWindLayers();
     }
@@ -845,6 +972,7 @@
             ugrd: { name: 'UGRD', offset: 0, scale: 1.944, level: -1, data: [] },
             vgrd: { name: 'VGRD', offset: 0, scale: 1.944, level: -1, data: [] },
             pres: { name: 'PRES', offset: 0, scale: 0.01, level: -1, data: [] },
+            hgt: { name: 'HGT', offset: 0, scale: 1, level: -1, data: [] },
             prate: { name: 'PRATE', offset: 0, scale: 3600, level: -1, data: [] },
             apcp: { name: 'APCP', level: -1, data: [] },
             acpcp: { name: 'ACPCP', level: -1, data: [] }
@@ -892,8 +1020,10 @@
             try {
                 const response = await fetchWithFallback(url);
                 const buffer = await response.arrayBuffer();
+                const baseName = buildForecastBasename(variant.date, variant.cycle, forecastHour);
+                await saveRawGribPayload(buffer, `${baseName}.grib2`);
                 const product = processGrib2(buffer);
-                const filename = `gfs-${variant.date}-${variant.cycle}z-f${pad(forecastHour, 3)}.fmap`;
+                const filename = `${baseName}.fmap`;
                 product.filename = filename;
                 product.meta = {
                     date: variant.date,
