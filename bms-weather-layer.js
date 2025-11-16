@@ -584,13 +584,21 @@
             const version = Number.isFinite(dataSource.version)
                 ? Math.trunc(dataSource.version)
                 : Math.trunc(fmap.version ?? 0);
-            const nodeCount = Number.isFinite(dataSource.nodeCount)
-                ? Math.trunc(dataSource.nodeCount)
-                : totalCells;
-            const scaler = Number.isFinite(dataSource.cellSpacingKm)
-                ? dataSource.cellSpacingKm
-                : fmap.scaler;
-            const anchorValues = Array.isArray(dataSource.anchor) ? dataSource.anchor : [];
+            const airmassDirection = Number.isFinite(fmap.airmass?.direction)
+                ? Math.trunc(fmap.airmass.direction)
+                : 0;
+            const airmassSpeed = Number.isFinite(fmap.airmass?.speed)
+                ? fmap.airmass.speed
+                : 0;
+            const turbulenceTop = Number.isFinite(fmap.turbulence?.top)
+                ? Math.trunc(fmap.turbulence.top)
+                : 31000;
+            const turbulenceBottom = Number.isFinite(fmap.turbulence?.bottom)
+                ? Math.trunc(fmap.turbulence.bottom)
+                : 28000;
+            const contrails = Array.isArray(fmap.contrail) && fmap.contrail.length === 4
+                ? fmap.contrail
+                : [34000, 28000, 25000, 20000];
 
             const showerOffset = this.getVersionOffset('shower', version);
             const visibilityOffset = this.getVersionOffset('visibility', version);
@@ -638,10 +646,12 @@
             writeInt32(version);
             writeInt32(columns);
             writeInt32(rows);
-            writeInt32(nodeCount);
-            writeFloat32(Number.isFinite(scaler) ? scaler : 0);
-            for (let i = 0; i < 6; i += 1) {
-                writeInt32(Number(anchorValues[i]) || 0);
+            writeInt32(airmassDirection);
+            writeFloat32(airmassSpeed);
+            writeInt32(turbulenceTop);
+            writeInt32(turbulenceBottom);
+            for (let i = 0; i < 4; i += 1) {
+                writeInt32(Number(contrails[i]) || 0);
             }
 
             const int32Array = new Int32Array(buffer);

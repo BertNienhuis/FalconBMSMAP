@@ -39,6 +39,7 @@
     const PRESSURE_ALT_LEVELS = [10, 92500, 85000, 70000, 65000, 50000, 40000, 30000, 20000, 10000];
 
     const DEFAULT_BOUNDS = { top: 90, left: 0, right: 360, bottom: -90 };
+    const TARGET_FMAP_VERSION = 8;
 
     let fmap = null;
     let gfsFile = null;
@@ -901,7 +902,7 @@
         const size = 59;
         fmap = {
             time: '',
-            version: 9,
+            version: TARGET_FMAP_VERSION,
             changed: false,
             scaler: 1,
             dimension: { x: size, y: size },
