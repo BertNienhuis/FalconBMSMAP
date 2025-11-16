@@ -757,12 +757,12 @@
 
         initializeDownloadControls() {
             const today = this.getUtcDateString(0);
-            const sevenDaysAgo = this.getUtcDateString(-7);
+            const fourteenDaysAgo = this.getUtcDateString(-14);
             const dateStr = this.getDefaultGfsDate();
             if (this.ui.gfsDateInput) {
                 this.ui.gfsDateInput.value = dateStr;
                 this.ui.gfsDateInput.max = today;
-                this.ui.gfsDateInput.min = sevenDaysAgo;
+                this.ui.gfsDateInput.min = fourteenDaysAgo;
                 this.ui.gfsDateInput.disabled = false;
             }
             const cycle = this.getSuggestedCycle();

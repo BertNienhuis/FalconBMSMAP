@@ -49,11 +49,11 @@ How to add <theather>_aip.json
 			WHEN a.Objective LIKE '%Highwaystrip%' THEN 'Highway Strip'
 			ELSE 'Other'
 		  END AS ObjectiveType, Channel, Band, UHF, VHF, GND, APP, LSO, OPS, ATIS, "ILS 1", "ILS 2", s."ILS 3", "ILS 4", X, Y, North, East 
-		  from read_csv('airports_korea.txt') a 
-		  join read_csv('station_korea.txt') s 
+		  from read_csv('C:\Users\bnien\Documents\GitHub\FalconBMSMAP\Hellas\airports_hellas.txt') a 
+		  join read_csv('C:\Users\bnien\Documents\GitHub\FalconBMSMAP\Hellas\stations_hellas.txt') s 
 		  on a.CampID = s.CampID
 	      where x <> '0.0'
-		  ) to 'aip_korea.json' (FORMAT JSON, ARRAY TRUE);
+		  ) to 'C:\Users\bnien\Documents\GitHub\FalconBMSMAP\Hellas\aip_hellas.json' (FORMAT JSON, ARRAY TRUE);
 	  
 How to create new terrain tiles
 - Open OSGeo4W Shell
