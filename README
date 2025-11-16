@@ -55,5 +55,10 @@ How to add <theather>_aip.json
 	      where x <> '0.0'
 		  ) to 'aip_korea.json' (FORMAT JSON, ARRAY TRUE);
 	  
-	  
+How to create new terrain tiles
+- Open OSGeo4W Shell
+- Navigate to directory containing 8k, 16k map
+- gdal2tiles.py -p raster -z 0-6  HellasMap16K.png ./
+- Extend theater settings getTheaterSettings
+
 	  
