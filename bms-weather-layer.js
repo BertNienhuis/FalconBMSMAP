@@ -31,9 +31,9 @@
 
     const VERSION_DATA_OFFSETS = {
         // Version-indexed offsets (0-based version). 0 indicates not available.
-        shower:     [0, 0, 0, 0, 0, 0, 0, 0, 0, 93998],
+        shower:     [0, 0, 0, 0, 0, 0, 0, 0, 93998, 93998],
         visibility: [0, 0, 0, 0, 0, 93998, 93998, 93998, 97479, 97479],
-        fog:        [0, 0, 0, 0, 0, 0, 0, 0, 0, 100960]
+        fog:        [0, 0, 0, 0, 0, 0, 0, 0, 100960, 100960]
     };
 
     function clamp(value, min, max) {
@@ -975,7 +975,8 @@
                     const polygon = new ol.geom.Polygon([this.getCellPolygon(cell.col, cell.row)]);
                     const typeFeature = new ol.Feature({
                         geometry: polygon,
-                        weatherClass: cell.weatherClass
+                        weatherClass: cell.weatherClass,
+                        hasRain: cell.hasRain
                     });
                     weatherTypeFeatures.push(typeFeature);
                 }
@@ -1043,7 +1044,7 @@
             return band?.color ?? '#ef4444';
         }
 
-        createWeatherTypeStyle(feature) {
+        createWeatherTypeStyle(feature, resolution) {
             const weatherClass = feature.get('weatherClass');
             const colors = {
                 2: 'rgba(34,197,94,0.5)',
@@ -1052,9 +1053,28 @@
             };
             const fillColor = colors[weatherClass];
             if (!fillColor) return null;
-            return new ol.style.Style({
-                fill: new ol.style.Fill({ color: fillColor })
-            });
+
+            const styles = [
+                new ol.style.Style({
+                    fill: new ol.style.Fill({ color: fillColor })
+                })
+            ];
+
+            if (feature.get('hasRain')) {
+                const radius = clamp(8 - (resolution * 0.12), 3, 6);
+                styles.push(new ol.style.Style({
+                    geometry: (feat) => feat.getGeometry()?.getInteriorPoint(),
+                    image: new ol.style.RegularShape({
+                        points: 3,
+                        radius,
+                        rotation: Math.PI,
+                        fill: new ol.style.Fill({ color: 'rgba(59,130,246,0.95)' }),
+                        stroke: new ol.style.Stroke({ color: 'rgba(15,23,42,0.95)', width: 1 })
+                    })
+                }));
+            }
+
+            return styles;
         }
 
         createWindStyle(feature, resolution) {

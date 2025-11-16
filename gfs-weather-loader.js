@@ -661,6 +661,12 @@
                 if (cloudType > fmap.cloud.type[y][x]) {
                     fmap.cloud.type[y][x] = cloudType;
                 }
+                if (coverage > 6 && fmap.cloud.size[y][x] > 1) {
+                    fmap.cloud.size[y][x] -= 1;
+                }
+                if (fmap.cloud.size[y][x] === 1) {
+                    fmap.cloud.type[y][x] = 1;
+                }
                 if (coverage <= CLOUD_TYPE_THRESHOLDS[0]) continue;
                 const altitudeFt = altitudeFromLevel(gfsFields.tcdc, y, x);
                 if (!Number.isFinite(altitudeFt) || altitudeFt <= 0) continue;
@@ -715,6 +721,7 @@
     function transcodeShowers() {
         const scaleY = gfsMsg.s3.def.Nj / fmap.dimension.y;
         const scaleX = gfsMsg.s3.def.Ni / fmap.dimension.x;
+        const threshold = 1.9;
 
         for (let y = 0; y < fmap.dimension.y; y += 1) {
             for (let x = 0; x < fmap.dimension.x; x += 1) {
@@ -722,8 +729,9 @@
                 const gx = (x * scaleX) >> 0;
                 const idx = gy * gfsMsg.s3.def.Ni + gx;
                 const prate = gfsFields.prate.data[idx] * gfsFields.prate.scale;
-                if (prate >= 1.9) {
-                    fmap.shower[y][x] = 1;
+                fmap.shower[y][x] = prate >= threshold ? 1 : 0;
+                if (fmap.shower[y][x] === 1 && fmap.cloud.type[y][x] < 1) {
+                    fmap.cloud.type[y][x] = 1;
                 }
             }
         }
