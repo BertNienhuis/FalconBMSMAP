@@ -33,12 +33,7 @@
     <div id="control-wrapper">
         <div id="control-bar" role="complementary" aria-label="Toolbar">
             <div class="tool-group">
-                <select id="theater-select" class="glass-select map-select" aria-label="Select theater">
-                    <option value="Korea">Korea</option>
-                    <option value="Israel">Israel</option>
-                    <option value="Balkans">Balkans</option>
-                    <option value="Hellas">Hellas</option>
-                </select>
+                <select id="theater-select" class="glass-select map-select" aria-label="Select theater"></select>
                 <input id="airport-search" type="text" placeholder="Search airports..." />
                 <ul id="airport-search-results" class="hidden"></ul>
             </div>
@@ -376,16 +371,48 @@
 
 
     <script>
-        let map, tileLayer;
-        let currentTheater = 'Korea';
-        let currentSettings = getTheaterSettings(currentTheater);
-        const THEATER_BOUNDS = {
-            //Korea: { top: 44, bottom: 31, left: 122, right: 136 },
-            Korea: { top: 43.6, bottom: 33.4, left: 121.1, right: 133.9 },
-            Israel: { top: 37, bottom: 27, left: 30, right: 40 },
-            Balkans: { top: 47, bottom: 34, left: 16, right: 30 },
-            Hellas: { top: 43.1, bottom: 32.9, left: 18.7, right: 31.4 }
+        const DEFAULT_THEATER = 'Korea';
+        const THEATERS = {
+            Korea: {
+                label: 'Korea',
+                size: 16384,
+                center: [8192, 8192],
+                zoom: 2,
+                scale: 0.004876,
+                aip: 'aip_korea.json',
+                bounds: { top: 43.6, bottom: 33.4, left: 121.1, right: 133.9 }
+            },
+            Israel: {
+                label: 'Israel',
+                size: 8192,
+                center: [4096, 4096],
+                zoom: 2,
+                scale: 0.002438,
+                aip: 'aip_israel.json',
+                bounds: { top: 37, bottom: 27, left: 30, right: 40 }
+            },
+            Balkans: {
+                label: 'Balkans',
+                size: 16384,
+                center: [8192, 8192],
+                zoom: 2,
+                scale: 0.004876,
+                aip: 'aip_balkans.json',
+                bounds: { top: 47, bottom: 34, left: 16, right: 30 }
+            },
+            Hellas: {
+                label: 'Hellas',
+                size: 16384,
+                center: [8192, 8192],
+                zoom: 2,
+                scale: 0.004876,
+                aip: 'aip_hellas.json',
+                bounds: { top: 43.1, bottom: 32.9, left: 18.7, right: 31.4 }
+            }
         };
+        let map, tileLayer;
+        let currentTheater = DEFAULT_THEATER;
+        let currentSettings = getTheaterSettings(currentTheater);
         const tileSize = 256;
         let dragPanInteraction = null;
         let isWhiteboardToolbarVisible = false;
@@ -396,7 +423,9 @@
         window.getCurrentScale = () => currentSettings.scale;
         window.getCurrentTheaterSettings = () => currentSettings;
         window.getCurrentTheater = () => currentTheater;
-        window.getCurrentTheaterBounds = () => THEATER_BOUNDS[currentTheater] || THEATER_BOUNDS.Korea;
+        window.getCurrentTheaterBounds = () => getTheaterSettings(currentTheater).bounds;
+        const theaterSelectElement = document.getElementById('theater-select');
+        populateTheaterSelect(theaterSelectElement, currentTheater);
         const controlWrapper = document.getElementById('control-wrapper');
         const toolbarToggle = document.getElementById('control-toggle');
         const toggleIcon = document.getElementById('control-toggle-icon');
@@ -599,13 +628,26 @@
 
 
         function getTheaterSettings(theater) {
-            const settings = {
-                Korea: { size: 16384, center: [8192, 8192], zoom: 2, scale: 0.004876, aip: 'aip_korea.json' },
-                Israel: { size: 8192, center: [4096, 4096], zoom: 2, scale: 0.002438, aip: 'aip_israel.json' },
-                Balkans: { size: 16384, center: [8192, 8192], zoom: 2, scale: 0.004876, aip: 'aip_balkans.json' },
-                Hellas: { size: 16384, center: [8192, 8192], zoom: 2, scale: 0.004876, aip: 'aip_hellas.json' }
-            };
-            return settings[theater] || settings.Korea;
+            return THEATERS[theater] || THEATERS[DEFAULT_THEATER];
+        }
+
+        function populateTheaterSelect(selectElement, selectedTheater) {
+            if (!selectElement) return;
+
+            selectElement.innerHTML = '';
+            Object.entries(THEATERS).forEach(([theaterKey, theaterConfig]) => {
+                const option = document.createElement('option');
+                option.value = theaterKey;
+                option.textContent = theaterConfig.label || theaterKey;
+                selectElement.appendChild(option);
+            });
+
+            const targetValue = selectedTheater && THEATERS[selectedTheater] ? selectedTheater : DEFAULT_THEATER;
+            if (THEATERS[targetValue]) {
+                selectElement.value = targetValue;
+            } else if (selectElement.options.length) {
+                selectElement.selectedIndex = 0;
+            }
         }
 
         function getResolutions(size) {
@@ -691,7 +733,7 @@
         });
 
         // Event: Switch Theater
-        document.getElementById('theater-select').addEventListener('change', e => {
+        theaterSelectElement?.addEventListener('change', e => {
             currentTheater = e.target.value;
             window.clearFlightPlanData?.(map);
             map.setTarget(null);
