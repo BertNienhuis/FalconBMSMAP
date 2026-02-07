@@ -861,6 +861,7 @@
         // Keyboard shortcuts
         document.addEventListener('keydown', e => {
             if (/input|textarea/i.test(e.target.tagName)) return;
+            if (isPdfViewerVisible) return;
 
             const shortcuts = {
                 q: 'whiteboard-pencil',
