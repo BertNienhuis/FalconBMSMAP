@@ -2,7 +2,15 @@
     const GFS_DEBUG = false;
 
     const GFS_ENDPOINT = 'https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?';
-    const GFS_PROXY = 'https://corsproxy.io/?';
+    const DEFAULT_PROXY_BASE = 'https://falcon-bmsmap.vercel.app';
+    const GFS_PROXY_TARGETS = (() => {
+        const bases = new Set();
+        if (typeof window !== 'undefined' && window.location?.origin && window.location.origin.startsWith('http')) {
+            bases.add(window.location.origin.replace(/\/$/, ''));
+        }
+        bases.add(DEFAULT_PROXY_BASE);
+        return Array.from(bases).map(base => `${base}/api/gfs-proxy?url=`);
+    })();
     const GFS_LEVELS = '&lev_100_mb=on&lev_150_mb=on&lev_200_mb=on&lev_300_mb=on&lev_400_mb=on&lev_500_mb=on&lev_650_mb=on&lev_700_mb=on&lev_850_mb=on&lev_925_mb=on&lev_2_m_above_ground=on&lev_10_m_above_ground=on&lev_convective_cloud_layer=on&lev_high_cloud_layer=on&lev_low_cloud_layer=on&lev_mean_sea_level=on&lev_middle_cloud_layer=on&lev_surface=on&lev_convective_cloud_bottom_level=on&lev_convective_cloud_top_level=on&lev_high_cloud_bottom_level=on&lev_high_cloud_top_level=on&lev_low_cloud_bottom_level=on&lev_low_cloud_top_level=on&lev_middle_cloud_bottom_level=on&lev_middle_cloud_top_level=on';
     const GFS_PARAMS = '&var_ACPCP=on&var_APCP=on&var_PRATE=on&var_PRMSL=on&var_TCDC=on&var_TMP=on&var_UGRD=on&var_VGRD=on&var_VIS=on&var_PRES=on&var_HGT=on';
     const GFS_SAVE_RAW_GRIB = false; // set true for debug to capture raw GRIB payloads
@@ -192,10 +200,11 @@
     }
 
     async function fetchWithFallback(url) {
-        const targets = [url];
-        if (GFS_PROXY) {
-            targets.push(`${GFS_PROXY}${encodeURIComponent(url)}`);
-        }
+        const targets = [];
+        GFS_PROXY_TARGETS.forEach((prefix) => {
+            targets.push(`${prefix}${encodeURIComponent(url)}`);
+        });
+        targets.push(url);
         let lastError = null;
         for (const target of targets) {
             try {
