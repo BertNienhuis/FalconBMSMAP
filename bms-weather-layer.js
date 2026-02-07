@@ -1,4 +1,5 @@
 (function () {
+    const GFS_RELEASE_LAG_HOURS = 6; // approximate time for GFS runs to become available
     const WEATHER_CLASSES = {
         1: { label: 'Clear', color: '#facc15' },
         2: { label: 'Fair', color: '#a3e635' },
@@ -791,12 +792,18 @@
             return `${year}-${month}-${day}`;
         }
 
+        getGfsReferenceDate() {
+            const lagMs = GFS_RELEASE_LAG_HOURS * 60 * 60 * 1000;
+            return new Date(Date.now() - lagMs);
+        }
+
         getDefaultGfsDate() {
-            return this.getUtcDateString(0);
+            return this.formatIsoDate(this.getGfsReferenceDate());
         }
 
         getSuggestedCycle() {
-            const hour = new Date().getUTCHours();
+            const reference = this.getGfsReferenceDate();
+            const hour = reference.getUTCHours();
             if (hour >= 18) return '18';
             if (hour >= 12) return '12';
             if (hour >= 6) return '06';

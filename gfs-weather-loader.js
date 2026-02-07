@@ -205,6 +205,7 @@
             targets.push(`${prefix}${encodeURIComponent(url)}`);
         });
         targets.push(url);
+        const errors = [];
         let lastError = null;
         for (const target of targets) {
             try {
@@ -212,11 +213,28 @@
                 if (response.ok) {
                     return response;
                 }
-                lastError = new Error(`GFS request failed (${response.status})`);
-                lastError.status = response.status;
+                const error = new Error(`GFS request failed (${response.status})`);
+                error.status = response.status;
+                if (response.status === 404) {
+                    throw error;
+                }
+                lastError = error;
+                errors.push({ target, message: error.message, status: error.status || null });
             } catch (err) {
                 lastError = err;
+                errors.push({ target, message: err?.message || 'Network error', status: err?.status || null });
             }
+        }
+        if (lastError && !lastError.status && errors.length > 0) {
+            const lastAttempt = errors[errors.length - 1];
+            const detail = lastAttempt.message || lastError.message || 'Unknown network failure';
+            const hint = typeof window !== 'undefined' && window.location?.protocol === 'http:'
+                ? 'Use HTTPS (or a local dev certificate) so browsers permit the NOAA request.'
+                : 'Check network/proxy settings.';
+            console.warn('GFS network failure:', detail, lastAttempt);
+            const enriched = new Error(`Network blocked NOAA request. ${hint}`);
+            enriched.cause = lastError;
+            throw enriched;
         }
         throw lastError || new Error('Unable to fetch GFS data');
     }
