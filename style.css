@@ -767,8 +767,8 @@ canvas {
 .weather-panel {
     position: fixed;
     top: 20px;
-    left: 50%;
-    transform: translate(-50%, -20px);
+    right: 20px;
+    transform: translate(-20px, -20px);
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -785,7 +785,7 @@ canvas {
 }
 
 .weather-panel.is-visible {
-    transform: translate(-50%, 0);
+    transform: translate(-20px, 0);
 }
 
 .weather-panel-content {
@@ -1225,6 +1225,95 @@ canvas {
 .weather-download-hint {
     font-size: 0.75rem;
     color: #475569;
+}
+
+.weather-download-range {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(15, 23, 42, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.weather-range-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.weather-toggle-inline {
+    margin: 0;
+}
+
+.weather-range-hint {
+    font-size: 0.75rem;
+    color: #475569;
+}
+
+.weather-range-fields {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.weather-range-fields label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: #0f172a;
+}
+
+.weather-range-fields input[type="number"],
+.weather-range-fields select {
+    border-radius: 6px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(255, 255, 255, 0.9);
+    color: #0f172a;
+    padding: 4px 8px;
+    min-height: 34px;
+}
+
+.weather-timeline {
+    display: none;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.weather-timeline.is-visible {
+    display: flex;
+    flex-direction: column;
+}
+
+.weather-timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.weather-timeline-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.weather-timeline-info,
+.weather-timeline-caption {
+    font-size: 0.78rem;
+    color: #475569;
+}
+
+.weather-timeline input[type="range"] {
+    width: 100%;
+    accent-color: #38bdf8;
 }
 
 .weather-status {

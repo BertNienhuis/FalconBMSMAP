@@ -17,6 +17,10 @@
 
     const WIND_ALTITUDES_FT = [0, 3000, 6000, 9000, 12000, 18000, 24000, 30000, 40000, 50000];
     const SAMPLE_STEP = 2;
+    const MAX_TIMELINE_FRAMES = 12;
+    const MAX_FORECAST_HOUR = 384;
+    const DEFAULT_RANGE_END = 12;
+    const DEFAULT_RANGE_STEP = 3;
 
     const FMAP_LAYER_OFFSETS = {
         weatherType: 11,          // int32
@@ -309,6 +313,8 @@
             this.debugMouseLeaveHandler = null;
             this.originalBuffer = null;
             this.downloadInProgress = false;
+            this.frames = [];
+            this.activeFrameIndex = -1;
 
             this.layers = {
                 weatherType: new ol.layer.Vector({
@@ -346,10 +352,20 @@
                 gfsDateInput: null,
                 gfsCycleInput: null,
                 gfsHourInput: null,
+                gfsRangeToggle: null,
+                gfsRangeStart: null,
+                gfsRangeEnd: null,
+                gfsRangeStep: null,
                 status: null,
                 toggles: {},
                 windSelect: null,
-                debugToggle: null
+                debugToggle: null,
+                timeline: {
+                    container: null,
+                    slider: null,
+                    info: null,
+                    caption: null
+                }
             };
         }
 
@@ -379,6 +395,10 @@
             this.ui.gfsDateInput = document.getElementById('weather-gfs-date');
             this.ui.gfsCycleInput = document.getElementById('weather-gfs-cycle');
             this.ui.gfsHourInput = document.getElementById('weather-gfs-hour');
+            this.ui.gfsRangeToggle = document.getElementById('weather-gfs-range-toggle');
+            this.ui.gfsRangeStart = document.getElementById('weather-gfs-range-start');
+            this.ui.gfsRangeEnd = document.getElementById('weather-gfs-range-end');
+            this.ui.gfsRangeStep = document.getElementById('weather-gfs-range-step');
             this.ui.status = document.getElementById('weather-status');
             this.ui.toggles.temperature = document.getElementById('weather-toggle-temp');
             this.ui.toggles.wind = document.getElementById('weather-toggle-wind');
@@ -386,6 +406,10 @@
             this.ui.toggles.weatherType = document.getElementById('weather-toggle-type');
             this.ui.windSelect = document.getElementById('weather-wind-altitude');
             this.ui.debugToggle = document.getElementById('weather-toggle-debug');
+            this.ui.timeline.container = document.getElementById('weather-timeline');
+            this.ui.timeline.slider = document.getElementById('weather-timeline-slider');
+            this.ui.timeline.info = document.getElementById('weather-timeline-info');
+            this.ui.timeline.caption = document.getElementById('weather-timeline-caption');
 
             this.ui.fileInput?.addEventListener('change', (event) => {
                 const file = event.target.files?.[0];
@@ -430,10 +454,29 @@
                 this.setWindAltitude(Number(event.target.value));
             });
 
+            this.ui.gfsRangeToggle?.addEventListener('change', (event) => {
+                const enabled = event.target.checked;
+                this.setRangeInputsEnabled(enabled);
+                if (enabled) {
+                    this.handleRangeInputChange();
+                }
+            });
+            ['gfsRangeStart', 'gfsRangeEnd', 'gfsRangeStep'].forEach((key) => {
+                const element = this.ui[key];
+                element?.addEventListener('change', () => this.handleRangeInputChange());
+            });
+            this.ui.timeline.slider?.addEventListener('input', (event) => {
+                const index = Number(event.target.value);
+                if (Number.isFinite(index)) {
+                    this.setActiveFrame(index);
+                }
+            });
+
             this.toggleControls(false);
             this.updateStatus('No weather imported');
             this.uiBound = true;
             this.initializeDownloadControls();
+            this.updateTimelineControls();
         }
 
         forEachLayer(callback) {
@@ -509,10 +552,13 @@
             this.data = null;
             this.filename = '';
             this.originalBuffer = null;
+            this.frames = [];
+            this.activeFrameIndex = -1;
             if (typeof window !== 'undefined') {
                 window.fmap = null;
             }
             this.toggleControls(false);
+            this.updateTimelineControls();
             if (showMessage) {
                 this.updateStatus('Weather overlay cleared');
             } else {
@@ -521,40 +567,154 @@
         }
 
         loadFromArrayBuffer(buffer, filename) {
+            const frame = this.createWeatherFrame(buffer, filename);
+            this.replaceFrames([frame], { resetToggles: true });
+        }
+
+        createWeatherFrame(buffer, filename, meta = {}) {
             const sourceBuffer = buffer instanceof ArrayBuffer
                 ? buffer
                 : buffer?.buffer;
             if (!(sourceBuffer instanceof ArrayBuffer)) {
                 throw new Error('Invalid FMAP buffer');
             }
-
-            this.originalBuffer = sourceBuffer.slice(0);
-            const parsed = parseFmap(this.originalBuffer);
-            this.data = parsed;
-            if (parsed.fmap && filename) {
+            const clone = sourceBuffer.slice(0);
+            const parsed = parseFmap(clone);
+            if (parsed.fmap) {
                 const inferredTime = this.extractTimeFromFilename(filename);
                 if (!parsed.fmap.time && inferredTime) {
                     parsed.fmap.time = inferredTime;
                 }
             }
-            if (typeof window !== 'undefined') {
-                window.fmap = parsed.fmap;
+            parsed.meta = meta || {};
+            return {
+                buffer: clone,
+                filename: filename || 'weather.fmap',
+                data: parsed,
+                meta: meta || {}
+            };
+        }
+
+        replaceFrames(frames, options = {}) {
+            if (!Array.isArray(frames) || frames.length === 0) {
+                return false;
             }
-            this.filename = filename;
+            this.frames = frames.slice();
+            const targetIndex = clamp(
+                Number.isFinite(options.startIndex) ? Math.trunc(options.startIndex) : 0,
+                0,
+                this.frames.length - 1
+            );
+            return this.applyFrame(targetIndex, options);
+        }
+
+        applyFrame(index, options = {}) {
+            if (!Array.isArray(this.frames) || this.frames.length === 0) return false;
+            const targetIndex = clamp(Number(index) || 0, 0, this.frames.length - 1);
+            const frame = this.frames[targetIndex];
+            if (!frame) return false;
+
+            this.activeFrameIndex = targetIndex;
+            this.data = frame.data;
+            this.filename = frame.filename;
+            this.originalBuffer = frame.buffer.slice(0);
+            if (typeof window !== 'undefined') {
+                window.fmap = frame.data?.fmap || null;
+            }
+
             this.buildFeatures();
             this.toggleControls(true);
 
-            // Enable defaults
-            this.setLayerToggle('weatherType', true);
-            this.setLayerToggle('wind', false);
+            if (options.resetToggles) {
+                this.setLayerToggle('weatherType', true);
+                this.setLayerToggle('wind', false);
+            } else {
+                Object.entries(this.ui.toggles).forEach(([key, input]) => {
+                    if (input) {
+                        this.toggleLayer(key, input.checked);
+                    }
+                });
+            }
 
             if (this.ui.debugToggle) {
                 this.ui.debugToggle.disabled = false;
             }
             this.setDebugEnabled(this.debugEnabled);
+            this.updateTimelineControls();
 
-            const info = `${parsed.columns}x${parsed.rows} grid (${filename})`;
-            this.updateStatus(`Loaded ${info}`);
+            const statusMessage = options.statusMessage || this.buildFrameStatus(frame, targetIndex);
+            if (statusMessage) {
+                this.updateStatus(statusMessage);
+            }
+            return true;
+        }
+
+        setActiveFrame(index) {
+            if (!Array.isArray(this.frames) || this.frames.length === 0) return false;
+            const clampedIndex = clamp(Number(index) || 0, 0, this.frames.length - 1);
+            if (clampedIndex === this.activeFrameIndex) return true;
+            return this.applyFrame(clampedIndex, { resetToggles: false });
+        }
+
+        getFrameLabel(frame) {
+            if (!frame) return '';
+            const timeLabel = frame.data?.fmap?.time;
+            if (timeLabel) return timeLabel;
+            const { meta = {} } = frame;
+            if (meta.date && meta.cycle) {
+                const date = meta.date;
+                const formatted = date.length === 8
+                    ? `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6)}`
+                    : date;
+                const hour = Number.isFinite(meta.forecastHour) ? ` +${meta.forecastHour}h` : '';
+                return `${formatted} ${meta.cycle}z${hour}`;
+            }
+            return this.extractTimeFromFilename(frame.filename) || frame.filename || '';
+        }
+
+        buildFrameStatus(frame, indexOverride) {
+            if (!frame?.data) return '';
+            const columns = frame.data.columns ?? frame.data.fmap?.dimension?.x;
+            const rows = frame.data.rows ?? frame.data.fmap?.dimension?.y;
+            const size = Number.isFinite(columns) && Number.isFinite(rows)
+                ? `${columns}x${rows} grid`
+                : 'Weather loaded';
+            const label = this.getFrameLabel(frame);
+            const index = Number.isFinite(indexOverride) ? indexOverride : this.activeFrameIndex;
+            const suffix = this.frames.length > 1
+                ? ` • frame ${index + 1}/${this.frames.length}`
+                : '';
+            return label ? `${size} (${label})${suffix}` : `${size}${suffix}`;
+        }
+
+        updateTimelineControls() {
+            const container = this.ui.timeline.container;
+            const slider = this.ui.timeline.slider;
+            const info = this.ui.timeline.info;
+            const caption = this.ui.timeline.caption;
+            const total = this.frames.length;
+            if (!container || !slider || !info || !caption) return;
+
+            if (!this.data || total <= 1) {
+                container.classList.remove('is-visible');
+                container.setAttribute('aria-hidden', 'true');
+                slider.value = '0';
+                slider.max = '0';
+                slider.disabled = true;
+                info.textContent = 'Forecast timeline';
+                caption.textContent = 'Load multiple forecasts to enable the timeline.';
+                return;
+            }
+
+            container.classList.add('is-visible');
+            container.setAttribute('aria-hidden', 'false');
+            slider.disabled = false;
+            slider.min = '0';
+            slider.max = String(total - 1);
+            slider.value = String(this.activeFrameIndex);
+
+            info.textContent = this.getFrameLabel(this.frames[this.activeFrameIndex]) || 'Forecast';
+            caption.textContent = `Frame ${this.activeFrameIndex + 1} of ${total}`;
         }
 
         getVersionOffset(key, version) {
@@ -775,6 +935,21 @@
                 this.ui.gfsHourInput.value = '0';
                 this.ui.gfsHourInput.disabled = false;
             }
+            if (this.ui.gfsRangeToggle) {
+                this.ui.gfsRangeToggle.checked = false;
+                this.ui.gfsRangeToggle.disabled = false;
+            }
+            if (this.ui.gfsRangeStart) {
+                this.ui.gfsRangeStart.value = '0';
+            }
+            if (this.ui.gfsRangeEnd) {
+                this.ui.gfsRangeEnd.value = String(DEFAULT_RANGE_END);
+            }
+            if (this.ui.gfsRangeStep) {
+                this.ui.gfsRangeStep.value = String(DEFAULT_RANGE_STEP);
+            }
+            this.handleRangeInputChange();
+            this.setRangeInputsEnabled(false);
             if (this.ui.downloadButton) {
                 this.ui.downloadButton.disabled = false;
             }
@@ -851,6 +1026,66 @@
             return `${year}-${month}-${day}`;
         }
 
+        clampForecastHour(value) {
+            if (!Number.isFinite(value)) return 0;
+            const rounded = Math.round(value);
+            return clamp(rounded, 0, MAX_FORECAST_HOUR);
+        }
+
+        normalizeRangeStep(value) {
+            if (!Number.isFinite(value) || value <= 0) return DEFAULT_RANGE_STEP;
+            return clamp(Math.round(value), 1, 24);
+        }
+
+        setRangeInputsEnabled(enabled) {
+            const fields = [this.ui.gfsRangeStart, this.ui.gfsRangeEnd, this.ui.gfsRangeStep];
+            fields.forEach(field => {
+                if (field) {
+                    field.disabled = !enabled;
+                }
+            });
+        }
+
+        handleRangeInputChange() {
+            const start = this.clampForecastHour(Number(this.ui.gfsRangeStart?.value ?? 0));
+            const end = this.clampForecastHour(Number(this.ui.gfsRangeEnd?.value ?? DEFAULT_RANGE_END));
+            const finalEnd = Math.max(start, end);
+            const step = this.normalizeRangeStep(Number(this.ui.gfsRangeStep?.value ?? DEFAULT_RANGE_STEP));
+            if (this.ui.gfsRangeStart) this.ui.gfsRangeStart.value = String(start);
+            if (this.ui.gfsRangeEnd) this.ui.gfsRangeEnd.value = String(finalEnd);
+            if (this.ui.gfsRangeStep) this.ui.gfsRangeStep.value = String(step);
+        }
+
+        getRangeSelection() {
+            if (!this.ui.gfsRangeToggle?.checked) return null;
+            const start = this.clampForecastHour(Number(this.ui.gfsRangeStart?.value ?? 0));
+            const endRaw = this.clampForecastHour(Number(this.ui.gfsRangeEnd?.value ?? DEFAULT_RANGE_END));
+            const end = Math.max(start, endRaw);
+            const step = this.normalizeRangeStep(Number(this.ui.gfsRangeStep?.value ?? DEFAULT_RANGE_STEP));
+            if (end <= start) {
+                return null;
+            }
+            const hours = [];
+            let current = start;
+            while (current <= end && hours.length < MAX_TIMELINE_FRAMES) {
+                hours.push(current);
+                current += step;
+            }
+            const truncated = current <= end;
+            if (hours[hours.length - 1] !== end && hours.length < MAX_TIMELINE_FRAMES) {
+                hours.push(end);
+            }
+            const uniqueHours = Array.from(new Set(hours)).map(hour => this.clampForecastHour(hour)).sort((a, b) => a - b);
+            if (uniqueHours.length <= 1) {
+                return null;
+            }
+            return {
+                hours: uniqueHours,
+                truncated,
+                raw: { start, end, step }
+            };
+        }
+
         async handleDownloadWeather() {
             if (this.downloadInProgress) return;
             if (typeof window.fetchGfsFmap !== 'function') {
@@ -868,25 +1103,72 @@
                 this.ui.gfsDateInput.value = clampedDate;
             }
             const cycle = this.ui.gfsCycleInput?.value || this.getSuggestedCycle();
-            const forecastHour = Number(this.ui.gfsHourInput?.value || 0);
+            const forecastHour = this.clampForecastHour(Number(this.ui.gfsHourInput?.value || 0));
+            const rangeSelection = this.getRangeSelection();
+            const hours = rangeSelection?.hours?.length ? rangeSelection.hours : [forecastHour];
+            const usingRange = hours.length > 1;
+            const dateParam = clampedDate.replace(/-/g, '');
 
             try {
                 this.setDownloadBusy(true);
-                this.updateStatus('Fetching NOAA GFS data…');
-                const product = await window.fetchGfsFmap({
-                    date: clampedDate.replace(/-/g, ''),
-                    cycle,
-                    forecastHour,
-                    bounds
-                });
-                if (!product?.fmap) {
-                    throw new Error('Incomplete GFS response');
+                const frames = [];
+                const failures = [];
+                for (let i = 0; i < hours.length; i += 1) {
+                    const hour = hours[i];
+                    const progressLabel = usingRange
+                        ? ` (${i + 1}/${hours.length} @ +${hour}h)`
+                        : '';
+                    this.updateStatus(`Fetching NOAA GFS data…${progressLabel}`);
+                    try {
+                        const product = await window.fetchGfsFmap({
+                            date: dateParam,
+                            cycle,
+                            forecastHour: hour,
+                            bounds
+                        });
+                        if (!product?.fmap) {
+                            throw new Error('Incomplete GFS response');
+                        }
+                        const buffer = this.createFmapBuffer(product);
+                        if (!buffer) {
+                            throw new Error('Unable to convert GFS data');
+                        }
+                        const meta = {
+                            date: product.meta?.date || dateParam,
+                            cycle: product.meta?.cycle || cycle,
+                            forecastHour: product.meta?.forecastHour ?? hour
+                        };
+                        const filename = product.filename || `gfs-${meta.date}-${meta.cycle}z-f${String(meta.forecastHour).padStart(3, '0')}.fmap`;
+                        const frame = this.createWeatherFrame(buffer, filename, meta);
+                        frames.push(frame);
+                    } catch (error) {
+                        failures.push({ hour, error });
+                        console.error(`GFS download failed for +${hour}h:`, error);
+                    }
                 }
-                const buffer = this.createFmapBuffer(product);
-                if (!buffer) {
-                    throw new Error('Unable to convert GFS data');
+
+                if (!frames.length) {
+                    const failure = failures[0]?.error;
+                    if (failure) throw failure;
+                    throw new Error('Failed to download weather.');
                 }
-                this.loadFromArrayBuffer(buffer, product.filename || 'gfs-weather.fmap');
+
+                let statusMessage = null;
+                if (usingRange) {
+                    const failureNote = failures.length
+                        ? `, ${failures.length} failed`
+                        : '';
+                    const truncatedNote = rangeSelection?.truncated
+                        ? ` (limited to ${MAX_TIMELINE_FRAMES} frames)`
+                        : '';
+                    statusMessage = `Loaded ${frames.length} forecasts${failureNote}${truncatedNote}`;
+                }
+                this.replaceFrames(frames, { resetToggles: true, statusMessage });
+
+                if (failures.length && !usingRange) {
+                    const detail = failures[0]?.error?.message;
+                    this.updateStatus(detail ? `Loaded with warnings: ${detail}` : 'Loaded with warnings.');
+                }
             } catch (error) {
                 console.error('GFS download failed:', error);
                 const message = error?.message ? `Failed to download weather: ${error.message}` : 'Failed to download weather.';

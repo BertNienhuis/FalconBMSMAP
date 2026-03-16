@@ -344,6 +344,41 @@
                         </select>
                     </label>
                 </div>
+                <div class="weather-download-range">
+                    <div class="weather-range-header">
+                        <label class="weather-toggle weather-toggle-inline">
+                            <input type="checkbox" id="weather-gfs-range-toggle" disabled>
+                            <span>Download range</span>
+                        </label>
+                        <span class="weather-range-hint">Fetch multiple forecasts</span>
+                    </div>
+                    <div class="weather-range-fields">
+                        <label>
+                            <span>Start (h)</span>
+                            <input type="number" id="weather-gfs-range-start" class="glass-select marker-select" min="0" max="384" step="3" value="0" disabled>
+                        </label>
+                        <label>
+                            <span>End (h)</span>
+                            <input type="number" id="weather-gfs-range-end" class="glass-select marker-select" min="0" max="384" step="3" value="12" disabled>
+                        </label>
+                        <label>
+                            <span>Interval</span>
+                            <select id="weather-gfs-range-step" class="glass-select marker-select" disabled>
+                                <option value="3">3h</option>
+                                <option value="6">6h</option>
+                                <option value="12">12h</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="weather-section weather-timeline" id="weather-timeline" aria-hidden="true">
+                <div class="weather-timeline-header">
+                    <div class="weather-timeline-title">Forecast timeline</div>
+                    <div id="weather-timeline-info" class="weather-timeline-info">Load a range to enable timeline.</div>
+                </div>
+                <input type="range" id="weather-timeline-slider" min="0" max="0" value="0" step="1" disabled>
+                <div id="weather-timeline-caption" class="weather-timeline-caption">Range slider is disabled.</div>
             </div>
             <div class="weather-section weather-action-footer">
                 <label class="weather-toggle">
